@@ -30,7 +30,7 @@ src/store/config.ts    Config (repos, pollMinutes, tab, snoozed, collapsed, acco
 src/App.tsx            UI, polling, repo filter, status tabs with per-repo collapsible groups, repo management
 ```
 
-Data flow: `App` polls -> `fetchRepos` (GitHub: one GraphQL query per repo, in parallel) and `fetchAdoRepos` (ADO) -> `classify` each PR for that repo's `RepoResult.me` -> render grouped by bucket, newest-updated first.
+Data flow: `App` polls -> `fetchRepos` (GitHub: one GraphQL query per repo, in parallel) and `fetchAdoRepos` (ADO), each calling `onResult` as a repo finishes so `App` shows that repo's PRs immediately while the others are still loading (header shows progress and the repos still pending) -> `classify` each PR for that repo's `RepoResult.me` -> render grouped by bucket, newest-updated first.
 
 ### Key decisions
 

@@ -61,23 +61,33 @@ export interface RepoResult {
   error?: string;
 }
 
-/** Fetch open PRs for each repo ("owner/name") in parallel. */
-export async function fetchRepos(repos: string[], account: string | null): Promise<RepoResult[]> {
+/** Fetch open PRs for each repo ("owner/name") in parallel; `onResult` fires as each repo finishes. */
+export async function fetchRepos(
+  repos: string[],
+  account: string | null,
+  onResult?: (r: RepoResult) => void,
+): Promise<RepoResult[]> {
   return Promise.all(
     repos.map(async (repo): Promise<RepoResult> => {
-      const [owner, name] = repo.split("/");
-      try {
-        const data = await gql<{
-          viewer: { login: string };
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          repository: { pullRequests: { nodes: any[] } } | null;
-        }>({ owner, name }, account);
-        const me = data.viewer.login;
-        if (!data.repository) return { repo, me, prs: [], error: "Repo not found or no access" };
-        return { repo, me, prs: data.repository.pullRequests.nodes.map((n) => toPr(repo, n)) };
-      } catch (e) {
-        return { repo, me: "", prs: [], error: String(e) };
-      }
+      const result = await fetchOne(repo, account);
+      onResult?.(result);
+      return result;
     }),
   );
+}
+
+async function fetchOne(repo: string, account: string | null): Promise<RepoResult> {
+  const [owner, name] = repo.split("/");
+  try {
+    const data = await gql<{
+      viewer: { login: string };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      repository: { pullRequests: { nodes: any[] } } | null;
+    }>({ owner, name }, account);
+    const me = data.viewer.login;
+    if (!data.repository) return { repo, me, prs: [], error: "Repo not found or no access" };
+    return { repo, me, prs: data.repository.pullRequests.nodes.map((n) => toPr(repo, n)) };
+  } catch (e) {
+    return { repo, me: "", prs: [], error: String(e) };
+  }
 }

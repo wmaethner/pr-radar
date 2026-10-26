@@ -84,3 +84,4 @@ h2[role="button"]:hover, h3[role="button"]:hover { color: inherit; }
 .repo-name .owner { opacity: 0.6; font-weight: 400; }
 .update-banner { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid #0a84ff; border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; }
 .update-banner > span:first-child { margin-right: auto; }
+.refreshing { font-size: 12px; margin: 4px 0; }

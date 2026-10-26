@@ -188,8 +188,11 @@ async function fetchCi(org: string, base: string, pr: AdoPr): Promise<PullReques
   return combineCi([statuses, policies]);
 }
 
-/** Fetch open PRs for each ADO repo key ("ado:org/project/repo") in parallel, as the `az login` user. */
-export async function fetchAdoRepos(keys: string[]): Promise<RepoResult[]> {
+/**
+ * Fetch open PRs for each ADO repo key ("ado:org/project/repo") in parallel, as the `az login` user;
+ * `onResult` fires as each repo finishes.
+ */
+export async function fetchAdoRepos(keys: string[], onResult?: (r: RepoResult) => void): Promise<RepoResult[]> {
   const identities = new Map<string, Promise<string>>();
   const whoAmI = (org: string) => {
     if (!identities.has(org))
@@ -201,16 +204,21 @@ export async function fetchAdoRepos(keys: string[]): Promise<RepoResult[]> {
       );
     return identities.get(org)!;
   };
+  const fetchOne = async (key: string): Promise<RepoResult> => {
+    const repo = fromAdoKey(key);
+    if (!repo) return { repo: key, me: "", prs: [], error: "Invalid Azure DevOps repo" };
+    try {
+      const me = await whoAmI(repo.org);
+      return { repo: key, me, prs: await fetchRepo(key, repo, me) };
+    } catch (e) {
+      return { repo: key, me: "", prs: [], error: String(e) };
+    }
+  };
   return Promise.all(
     keys.map(async (key): Promise<RepoResult> => {
-      const repo = fromAdoKey(key);
-      if (!repo) return { repo: key, me: "", prs: [], error: "Invalid Azure DevOps repo" };
-      try {
-        const me = await whoAmI(repo.org);
-        return { repo: key, me, prs: await fetchRepo(key, repo, me) };
-      } catch (e) {
-        return { repo: key, me: "", prs: [], error: String(e) };
-      }
+      const result = await fetchOne(key);
+      onResult?.(result);
+      return result;
     }),
   );
 }
