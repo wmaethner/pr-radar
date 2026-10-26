@@ -6,6 +6,7 @@
   "permissions": [
     "core:default",
     "core:window:allow-set-badge-count",
+    "core:window:allow-set-overlay-icon",
     "opener:default",
     "updater:default",
     "process:allow-restart"

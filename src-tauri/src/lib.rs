@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsStr,
     fs,
     io::Write,
     path::PathBuf,
@@ -6,7 +7,21 @@ use std::{
 };
 use tauri::Manager;
 
+/// A command that doesn't flash a console window when started from the GUI on Windows.
+fn command(program: impl AsRef<OsStr>) -> Command {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let mut cmd = Command::new(program);
+        cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+        cmd
+    }
+    #[cfg(not(windows))]
+    Command::new(program)
+}
+
 /// GUI apps on macOS do not inherit the shell PATH, so look in common install dirs.
+#[cfg(not(windows))]
 fn bin_path(name: &str) -> PathBuf {
     for dir in ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"] {
         let p = PathBuf::from(dir).join(name);
@@ -17,6 +32,48 @@ fn bin_path(name: &str) -> PathBuf {
     PathBuf::from(name)
 }
 
+/// Windows GUI apps do inherit PATH, so the bare name usually resolves. The default install
+/// dirs are checked first for installs whose PATH change hasn't reached this process yet.
+#[cfg(windows)]
+fn bin_path(name: &str) -> PathBuf {
+    let candidates = [
+        ("ProgramFiles", r"GitHub CLI"),
+        ("LOCALAPPDATA", r"Programs\GitHub CLI"),
+    ];
+    for (var, dir) in candidates {
+        if let Some(root) = std::env::var_os(var) {
+            let p = PathBuf::from(root).join(dir).join(format!("{name}.exe"));
+            if p.exists() {
+                return p;
+            }
+        }
+    }
+    PathBuf::from(name)
+}
+
+/// The base `az` invocation. macOS: the binary from `bin_path`. Windows: `az` is a `.cmd`
+/// wrapper, which can't be spawned reliably with arbitrary arguments (cmd.exe quoting of `&`,
+/// `%` and so on), so run the Azure CLI's bundled Python the way the wrapper does.
+#[cfg(not(windows))]
+fn az_command() -> Command {
+    command(bin_path("az"))
+}
+
+#[cfg(windows)]
+fn az_command() -> Command {
+    for var in ["ProgramFiles", "ProgramFiles(x86)"] {
+        if let Some(root) = std::env::var_os(var) {
+            let python = PathBuf::from(root).join(r"Microsoft SDKs\Azure\CLI2\python.exe");
+            if python.exists() {
+                let mut cmd = command(python);
+                cmd.args(["-IBm", "azure.cli"]);
+                return cmd;
+            }
+        }
+    }
+    command("az.cmd") // e.g. a pip install of the Azure CLI
+}
+
 fn gh_path() -> PathBuf {
     bin_path("gh")
 }
@@ -24,7 +81,7 @@ fn gh_path() -> PathBuf {
 /// Token for a specific logged-in account, so we can act as that account
 /// without changing which account is active for the user's own `gh` CLI.
 fn token_for(user: &str) -> Result<String, String> {
-    let out = Command::new(gh_path())
+    let out = command(gh_path())
         .args(["auth", "token", "--hostname", "github.com", "--user", user])
         .output()
         .map_err(|e| format!("could not run gh: {e}"))?;
@@ -40,7 +97,7 @@ fn token_for(user: &str) -> Result<String, String> {
 /// is made as that account instead of the active one. Returns the raw JSON response.
 #[tauri::command]
 fn gh_graphql(body: String, account: Option<String>) -> Result<String, String> {
-    let mut cmd = Command::new(gh_path());
+    let mut cmd = command(gh_path());
     cmd.args(["api", "graphql", "--input", "-"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -76,7 +133,7 @@ fn az_rest(url: String) -> Result<String, String> {
     if !url.starts_with("https://dev.azure.com/") {
         return Err("refusing to call a non-Azure DevOps URL".into());
     }
-    let out = Command::new(bin_path("az"))
+    let out = az_command()
         .args(["rest", "--method", "get", "--resource", ADO_RESOURCE, "--url", &url, "--output", "json"])
         .output()
         .map_err(|e| format!("could not run az (is the Azure CLI installed?): {e}"))?;
@@ -91,7 +148,7 @@ fn az_rest(url: String) -> Result<String, String> {
 /// account has problems but still prints the JSON, so stdout is used regardless.
 #[tauri::command]
 fn gh_accounts() -> Result<String, String> {
-    let out = Command::new(gh_path())
+    let out = command(gh_path())
         .args(["auth", "status", "--json", "hosts"])
         .output()
         .map_err(|e| format!("could not run gh: {e}"))?;

@@ -43,11 +43,12 @@ The CI workflow (`.github/workflows/ci.yml`) runs `tsc` and the tests on every P
 
 - Download the `.dmg` from the Releases page and drag the app to Applications.
 - Builds aren't Apple-signed or notarized, so the first launch shows a Gatekeeper warning. Right-click the app, choose Open, and confirm. (Or run `xattr -cr /Applications/pr-radar.app` once.) Later updates installed by the app itself should not prompt again.
+- **Windows:** download the `.exe` (NSIS) or `.msi` installer from the Releases page and run it. SmartScreen will warn because the installer isn't signed; click More info, then Run anyway.
 - Each machine still needs `gh` (and `az` for Azure DevOps) installed and logged in.
 
 ## Not set up yet
 
-- Windows builds (the app needs its Windows port first; see `docs/architecture.md`). The matrix has a commented-out Windows entry.
+- Windows code signing. Unsigned installers trigger a SmartScreen warning ("Windows protected your PC": click More info, then Run anyway).
 - Apple code signing and notarization (steps below).
 
 ## Apple signing and notarization (to do)

@@ -32,14 +32,17 @@ Each machine needs `gh` (and `az` for ADO) installed and logged in. Neither is b
 
 ## Platform support
 
-Developed and used on macOS only. Not tested on Windows or Linux.
+Developed and used on macOS. Windows support is implemented but has only been compiled in CI, not run on a Windows machine yet. Linux is not supported.
 
-Portable as-is: the React UI, `classify.ts`, the GitHub and ADO clients, config storage and the link opener.
+Portable as-is: the React UI, `classify.ts`, the GitHub and ADO clients, config storage (Tauri resolves the right directory per OS) and the link opener.
 
-macOS-specific, most likely to need work for a Windows port:
+Platform-specific code (all in `src-tauri/src/lib.rs` and `src/badge.ts`):
 
-1. **Binary lookup** (`bin_path` in `lib.rs`): searches only `/opt/homebrew/bin`, `/usr/local/bin` and `/usr/bin`, then falls back to the bare name. This exists because macOS GUI apps don't inherit the shell PATH. Windows GUI apps do, so `gh` may already resolve, but `az` is a `.cmd` script, which Rust's `Command` doesn't launch directly. The lookup should be split per platform with `#[cfg(target_os = ...)]`.
-2. **Dock badge**: `set_badge_count` is Dock-oriented and not supported on Windows. A taskbar overlay icon or tray icon would replace it, and the capability in `src-tauri/capabilities/default.json` would change with it.
-3. **Build prerequisites**: Windows needs the MSVC build tools and WebView2 (preinstalled on Windows 11).
+- **Finding `gh` and `az`.** macOS GUI apps don't inherit the shell PATH, so `bin_path` searches `/opt/homebrew/bin`, `/usr/local/bin` and `/usr/bin`. Windows GUI apps do inherit PATH, so `gh.exe` resolves by name, with `%ProgramFiles%\GitHub CLI` and `%LOCALAPPDATA%\Programs\GitHub CLI` checked first.
+- **Running `az` on Windows.** `az` is a `.cmd` wrapper, which Rust can't spawn reliably with arbitrary arguments (cmd.exe quoting of `&`, `%` and so on, and our URLs contain `&`). `az_command` runs the Azure CLI's bundled `python.exe -IBm azure.cli` from `%ProgramFiles%\Microsoft SDKs\Azure\CLI2` instead, the same thing the wrapper does, and falls back to `az.cmd` on PATH (for example a pip install).
+- **No console flash.** Every child process starts with `CREATE_NO_WINDOW` on Windows (`command()`), otherwise a console window would pop up on every `gh` or `az` call.
+- **Badge.** macOS shows the Dock badge count. Windows has no equivalent, so `setActionBadge` draws the count on a canvas and sets it as the taskbar overlay icon. This needs the `image-png` Tauri feature and the `core:window:allow-set-overlay-icon` permission.
 
-These Windows notes come from reading the code, not from running it on Windows.
+On Windows each machine needs `gh` and optionally `az` installed and logged in, for example `winget install GitHub.cli` and `winget install Microsoft.AzureCLI`. Build prerequisites are the MSVC build tools and WebView2 (preinstalled on Windows 11, bootstrapped by the installer on Windows 10).
+
+Not verified on a real Windows machine: the `az` Python path, the overlay icon rendering and the updater's install flow. CI's `windows-build` job only checks that it compiles.

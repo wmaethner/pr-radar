@@ -12,7 +12,7 @@ Built with [Tauri](https://tauri.app/) v2, React and TypeScript.
 
 - [Node.js](https://nodejs.org/) and npm
 - [Rust toolchain](https://www.rust-lang.org/tools/install) and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS
-- [GitHub CLI](https://cli.github.com/) (`gh`), installed and logged in (`gh auth login`)
+- [GitHub CLI](https://cli.github.com/) (`gh`), installed and logged in (`gh auth login`). On Windows: `winget install GitHub.cli`
 
 PR Radar uses your existing `gh` login to query GitHub, so it never stores a token. If you're logged in to several accounts, pick one from the account dropdown in the header; this doesn't change the active account in your terminal.
 
@@ -47,7 +47,7 @@ Settings are stored as `config.json` in the app's config directory:
 
 ## Azure DevOps
 
-PR Radar can also track Azure DevOps repos. Install the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/) (`az`), run `az login`, then add a repo from its URL, for example `https://dev.azure.com/{org}/{project}/_git/{repo}` or the older `https://{org}.visualstudio.com/{project}/_git/{repo}`. The account dropdown only applies to GitHub.
+PR Radar can also track Azure DevOps repos. Install the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/) (`az`; on Windows `winget install Microsoft.AzureCLI`), run `az login`, then add a repo from its URL, for example `https://dev.azure.com/{org}/{project}/_git/{repo}` or the older `https://{org}.visualstudio.com/{project}/_git/{repo}`. The account dropdown only applies to GitHub.
 
 ## Project layout
 

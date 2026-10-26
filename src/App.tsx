@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { listAccounts, type GhAccount } from "./github/accounts";
 import { fetchAdoRepos } from "./ado/client";
@@ -7,6 +6,7 @@ import { isAdo, fromAdoKey, repoLabel } from "./ado/repo";
 import { fetchRepos, type RepoResult } from "./github/client";
 import type { Classified } from "./github/types";
 import { classify } from "./state/classify";
+import { setActionBadge } from "./badge";
 import { checkForUpdate, installUpdate } from "./update";
 import type { Update } from "@tauri-apps/plugin-updater";
 import { isSnoozed, pruneSnoozed, snoozeUntil, timeLeft } from "./state/snooze";
@@ -215,12 +215,10 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [now]);
 
-  // Dock/app-icon badge: PRs needing action across all repos, ignoring the view filter. Snoozed ones don't count.
+  // Dock badge (macOS) / taskbar overlay (Windows): PRs needing action across all repos, ignoring the view filter. Snoozed ones don't count.
   const actionCount = useMemo(() => items.filter((i) => tabOf(i) === "action").length, [items, tabOf]);
   useEffect(() => {
-    getCurrentWindow()
-      .setBadgeCount(actionCount > 0 ? actionCount : undefined)
-      .catch(() => {});
+    setActionBadge(actionCount);
   }, [actionCount]);
 
   if (!config) return <main className="app">Loading…</main>;

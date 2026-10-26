@@ -38,9 +38,8 @@ jobs:
             args: --target aarch64-apple-darwin
           - platform: macos-latest # Intel
             args: --target x86_64-apple-darwin
-          # Windows is off until the app's Windows port is done (see docs/architecture.md).
-          # - platform: windows-latest
-          #   args: ""
+          - platform: windows-latest
+            args: ""
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
