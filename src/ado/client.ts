@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { RepoResult } from "../github/client";
 import type { PullRequest, Review, ReviewThread } from "../github/types";
+import type { FetchContext } from "../providers/types";
 import { fromAdoKey, type AdoRepo } from "./repo";
 
 const API = "api-version=7.1";
@@ -188,37 +188,19 @@ async function fetchCi(org: string, base: string, pr: AdoPr): Promise<PullReques
   return combineCi([statuses, policies]);
 }
 
-/**
- * Fetch open PRs for each ADO repo key ("ado:org/project/repo") in parallel, as the `az login` user;
- * `onResult` fires as each repo finishes.
- */
-export async function fetchAdoRepos(keys: string[], onResult?: (r: RepoResult) => void): Promise<RepoResult[]> {
-  const identities = new Map<string, Promise<string>>();
-  const whoAmI = (org: string) => {
-    if (!identities.has(org))
-      identities.set(
-        org,
-        get<{ authenticatedUser: { id: string } }>(
-          `https://dev.azure.com/${enc(org)}/_apis/connectionData?api-version=7.1-preview.1`,
-        ).then((r) => r.authenticatedUser.id),
-      );
-    return identities.get(org)!;
-  };
-  const fetchOne = async (key: string): Promise<RepoResult> => {
-    const repo = fromAdoKey(key);
-    if (!repo) return { repo: key, me: "", prs: [], error: "Invalid Azure DevOps repo" };
-    try {
-      const me = await whoAmI(repo.org);
-      return { repo: key, me, prs: await fetchRepo(key, repo, me) };
-    } catch (e) {
-      return { repo: key, me: "", prs: [], error: String(e) };
-    }
-  };
-  return Promise.all(
-    keys.map(async (key): Promise<RepoResult> => {
-      const result = await fetchOne(key);
-      onResult?.(result);
-      return result;
-    }),
-  );
+/** Fetch one ADO repo key ("ado:org/project/repo")'s open PRs, as the `az login` user. */
+export async function fetchAdoRepo(key: string, ctx: FetchContext): Promise<{ me: string; prs: PullRequest[] }> {
+  const repo = fromAdoKey(key);
+  if (!repo) throw new Error("Invalid Azure DevOps repo");
+  // One identity lookup per org per refresh, shared by that org's repos.
+  const cacheKey = `ado-me:${repo.org}`;
+  if (!ctx.cache.has(cacheKey))
+    ctx.cache.set(
+      cacheKey,
+      get<{ authenticatedUser: { id: string } }>(
+        `https://dev.azure.com/${enc(repo.org)}/_apis/connectionData?api-version=7.1-preview.1`,
+      ).then((r) => r.authenticatedUser.id),
+    );
+  const me = (await ctx.cache.get(cacheKey)) as string;
+  return { me, prs: await fetchRepo(key, repo, me) };
 }

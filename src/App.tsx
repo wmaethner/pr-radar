@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { listAccounts, type GhAccount } from "./github/accounts";
-import { fetchAdoRepos } from "./ado/client";
-import { isAdo, fromAdoKey, repoLabel } from "./ado/repo";
-import { fetchRepos, type RepoResult } from "./github/client";
+import { fetchAll, parseAnyRepo, repoDisplay, type RepoResult } from "./providers";
 import type { Classified } from "./github/types";
 import { classify } from "./state/classify";
 import { setActionBadge } from "./badge";
 import { checkForUpdate, installUpdate } from "./update";
 import type { Update } from "@tauri-apps/plugin-updater";
 import { isSnoozed, pruneSnoozed, snoozeUntil, timeLeft } from "./state/snooze";
-import { loadConfig, parseAnyRepo, saveConfig, type Config, type Tab } from "./store/config";
+import { loadConfig, saveConfig, type Config, type Tab } from "./store/config";
 import "./App.css";
 
 const TABS: { key: Tab; label: string }[] = [
@@ -35,10 +33,14 @@ function ago(iso: string) {
   return `${Math.round(mins / 1440)}d ago`;
 }
 
+const labelOf = (key: string) => {
+  const { owner, name } = repoDisplay(key);
+  return owner ? `${owner}/${name}` : name;
+};
+
 /** Repo name with the owner dimmed so the repo itself stands out. */
 function RepoName({ repo }: { repo: string }) {
-  const ado = isAdo(repo) ? fromAdoKey(repo) : null;
-  const [owner, name] = ado ? [`${ado.org}/${ado.project}`, ado.repo] : repo.split("/");
+  const { owner, name } = repoDisplay(repo);
   return (
     <span className="repo-name">
       <span className="owner">{owner}/</span>
@@ -134,10 +136,7 @@ export default function App() {
       setResults((prev) => ({ ...prev, [r.repo]: r }));
       setPending((prev) => prev.filter((k) => k !== r.repo));
     };
-    await Promise.all([
-      fetchRepos(repos.filter((r) => !isAdo(r)), account, onResult),
-      fetchAdoRepos(repos.filter(isAdo), onResult),
-    ]);
+    await fetchAll(repos, account, onResult);
     if (run === runId.current) setUpdated(new Date());
   }, []);
 
@@ -266,7 +265,7 @@ export default function App() {
             <option value="">All repos</option>
             {config.repos.map((r) => (
               <option key={r} value={r}>
-                {repoLabel(r)}
+                {labelOf(r)}
               </option>
             ))}
           </select>
@@ -333,7 +332,7 @@ export default function App() {
           <ul>
             {config.repos.map((r) => (
               <li key={r}>
-                {repoLabel(r)}
+                {labelOf(r)}
                 <button onClick={() => update({ ...config, repos: config.repos.filter((x) => x !== r) })}>
                   Remove
                 </button>
@@ -345,13 +344,13 @@ export default function App() {
 
       {loading && (
         <p className="muted refreshing">
-          Refreshing {pending.map(repoLabel).join(", ")}…
+          Refreshing {pending.map(labelOf).join(", ")}…
         </p>
       )}
       {config.repos.length === 0 && <p className="muted">No repos yet. Click “Repos” to add one.</p>}
       {errors.map((e) => (
         <p key={e.repo} className="error">
-          {repoLabel(e.repo)}: {e.error}
+          {labelOf(e.repo)}: {e.error}
         </p>
       ))}
 
