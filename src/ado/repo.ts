@@ -18,9 +18,6 @@ export function fromAdoKey(key: string): AdoRepo | null {
   return isAdo(key) && org && project && repo && rest.length === 0 ? { org, project, repo } : null;
 }
 
-/** Key without the "ado:" prefix, for showing to the user. */
-export const repoLabel = (key: string) => (isAdo(key) ? key.slice(PREFIX.length) : key);
-
 /**
  * Accepts https://dev.azure.com/{org}/{project}/_git/{repo} (optionally with an
  * `org@` user prefix or trailing path), the legacy https://{org}.visualstudio.com/...

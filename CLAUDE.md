@@ -20,17 +20,21 @@ The goal is a single glanceable view of "what do I need to do on PRs right now",
 ```
 src-tauri/src/lib.rs   Rust commands: gh_graphql, gh_accounts, az_rest, load_config, save_config
 src/github/accounts.ts Lists logged-in gh accounts (gh_accounts command)
-src/github/client.ts   GraphQL query + fetchRepos(); maps raw nodes to PullRequest
+src/providers/         Provider interface + registry: fetchAll(), parseAnyRepo(), repoDisplay(); one runner for fan-out/errors
+src/github/provider.ts GitHub Provider (key "owner/name"); client.ts has the GraphQL query + fetchRepo()
 src/github/types.ts    PullRequest, Classified, Bucket and related types (shared by GitHub and ADO)
 src/ado/repo.ts        ADO repo keys ("ado:org/project/repo"), parseAdoRepo() for URLs
+src/ado/provider.ts    Azure DevOps Provider (key "ado:org/project/repo")
 src/ado/client.ts      Azure DevOps REST via az_rest; maps votes/threads/iterations to PullRequest
 src/state/classify.ts  Pure logic: classify(pr, me) -> Classified | null
 src/state/snooze.ts    Pure snooze helpers (expiry, pruning, time left)
-src/store/config.ts    Config (repos, pollMinutes, tab, snoozed, collapsed, account) load/save, parseRepo()/parseAnyRepo()
+src/store/config.ts    Config (repos, pollMinutes, tab, snoozed, collapsed, account) load/save
 src/App.tsx            UI, polling, repo filter, status tabs with per-repo collapsible groups, repo management
 ```
 
-Data flow: `App` polls -> `fetchRepos` (GitHub: one GraphQL query per repo, in parallel) and `fetchAdoRepos` (ADO), each calling `onResult` as a repo finishes so `App` shows that repo's PRs immediately while the others are still loading (header shows progress and the repos still pending) -> `classify` each PR for that repo's `RepoResult.me` -> render grouped by bucket, newest-updated first.
+Data flow: `App` polls -> `fetchAll` (`src/providers`) looks up each repo key's `Provider` and runs `provider.fetchRepo` for all repos in parallel (GitHub: one GraphQL query; ADO: `az` REST calls), turning a throw into `RepoResult.error` and calling `onResult` as each repo finishes so `App` shows that repo's PRs immediately while the others load (header shows progress and the repos still pending) -> `classify` each PR for that repo's `RepoResult.me` -> render grouped by bucket, newest-updated first.
+
+To add a code host, implement `Provider` (`src/providers/types.ts`) in its own folder and add it to `providers` in `src/providers/index.ts`. Keys must be owned by exactly one provider; `providers.test.ts` checks the contract.
 
 ### Key decisions
 
