@@ -8,22 +8,55 @@ A desktop app that shows which GitHub pull requests need your attention. Add the
 
 Built with [Tauri](https://tauri.app/) v2, React and TypeScript.
 
-## Requirements
+## Install
+
+Download the installer for your system from the [latest release](https://github.com/wmaethner/pr-radar/releases/latest). Either way, you also need the GitHub CLI signed in (see [Sign in](#sign-in)).
+
+### macOS
+
+1. Download the `.dmg` that matches your Mac: `pr-radar_<version>_aarch64.dmg` for Apple Silicon (M1 and later) or `pr-radar_<version>_x64.dmg` for Intel. If you're not sure, choose Apple menu, About This Mac: "Chip" shows Apple M-something or Intel.
+2. Open the `.dmg` and drag **pr-radar** into **Applications**.
+3. The app isn't signed with an Apple Developer ID yet, so macOS will refuse to open a browser download and say **"pr-radar is damaged and can't be opened"**. The file is fine. Clear the download quarantine flag once in Terminal, then open it normally:
+   ```sh
+   xattr -cr /Applications/pr-radar.app
+   ```
+   If that prints "Operation not permitted", go to System Settings, Privacy & Security, App Management, allow Terminal, and run it again.
+
+### Windows
+
+1. Download `pr-radar_<version>_x64-setup.exe` (or the `.msi` if you prefer an MSI) and run it.
+2. The installer isn't code-signed yet, so Windows SmartScreen may show **"Windows protected your PC"**. Click **More info**, then **Run anyway**.
+3. The app needs Microsoft Edge WebView2. It's already part of Windows 11, and the installer sets it up on Windows 10.
+
+Windows support is new and has had less testing than macOS. If something doesn't work, please [open an issue](https://github.com/wmaethner/pr-radar/issues).
+
+### Sign in
+
+PR Radar uses the command-line tools you're already signed in with, so it never stores a token.
+
+- **GitHub:** install the [GitHub CLI](https://cli.github.com/) (`brew install gh` on macOS, `winget install GitHub.cli` on Windows) and run `gh auth login`. If you're signed in to several accounts, pick one from the account dropdown in the header; this doesn't change the active account in your terminal.
+- **Azure DevOps (optional):** see [Azure DevOps](#azure-devops).
+
+### Updates
+
+Installed copies check for a new release when the app starts. If one exists, a banner at the top shows **Update and restart**. You don't need to download anything again.
+
+## Using the app
+
+Switch between the **Needs action**, **Ready to merge**, **Waiting** and **Snoozed** tabs (each shows a count). Hover a PR in *Needs action* and click the 💤 button to move it to *Snoozed* for 24 hours; it returns to whichever tab it belongs in when the time is up, or sooner with **Unsnooze**, and click a repo heading within a tab to collapse it. Click **Repos**, add repos as `owner/name` or a GitHub URL, and the app fetches your PRs. It refreshes every 5 minutes, or on demand with **Refresh**.
+
+## Building from source
+
+Only needed if you want to develop PR Radar. You need:
 
 - [Node.js](https://nodejs.org/) and npm
 - [Rust toolchain](https://www.rust-lang.org/tools/install) and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS
-- [GitHub CLI](https://cli.github.com/) (`gh`), installed and logged in (`gh auth login`). On Windows: `winget install GitHub.cli`
-
-PR Radar uses your existing `gh` login to query GitHub, so it never stores a token. If you're logged in to several accounts, pick one from the account dropdown in the header; this doesn't change the active account in your terminal.
-
-## Getting started
+- The GitHub CLI, signed in (see above)
 
 ```sh
 npm install
 npm run tauri dev
 ```
-
-Switch between the **Needs action**, **Ready to merge**, **Waiting** and **Snoozed** tabs (each shows a count). Hover a PR in *Needs action* and click the 💤 button to move it to *Snoozed* for 24 hours; it returns to whichever tab it belongs in when the time is up, or sooner with **Unsnooze**, and click a repo heading within a tab to collapse it. Click **Repos**, add repos as `owner/name` or a GitHub URL, and the app fetches your PRs. It refreshes every 5 minutes, or on demand with **Refresh**.
 
 ## Scripts
 
