@@ -1,6 +1,6 @@
 [package]
 name = "pr-radar"
-version = "0.1.2"
+version = "0.2.0"
 description = "Desktop app that shows which GitHub PRs need your attention"
 authors = ["Will Maethner"]
 edition = "2021"
