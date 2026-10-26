@@ -18,9 +18,14 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm test
 
-  # Compiles the Tauri backend on Windows so Windows-only code is checked on every PR.
-  windows-build:
-    runs-on: windows-latest
+  # Compiles the Tauri backend on each desktop platform, so platform-specific code
+  # (#[cfg(windows)] and friends) is checked on every PR, not just at release time.
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

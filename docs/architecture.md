@@ -45,4 +45,4 @@ Platform-specific code (all in `src-tauri/src/lib.rs` and `src/badge.ts`):
 
 On Windows each machine needs `gh` and optionally `az` installed and logged in, for example `winget install GitHub.cli` and `winget install Microsoft.AzureCLI`. Build prerequisites are the MSVC build tools and WebView2 (preinstalled on Windows 11, bootstrapped by the installer on Windows 10).
 
-Not verified on a real Windows machine: the `az` Python path, the overlay icon rendering and the updater's install flow. CI's `windows-build` job only checks that it compiles.
+Not verified on a real Windows machine: the `az` Python path, the overlay icon rendering and the updater's install flow. CI's `build` job (macOS and Windows) only checks that it compiles.
