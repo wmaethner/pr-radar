@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { listAccounts, type GhAccount } from "./github/accounts";
-import { fetchAll, parseAnyRepo, repoDisplay, type RepoResult } from "./providers";
+import { fetchAll, parseAnyRepo, type RepoResult } from "./providers";
 import type { Classified } from "./github/types";
 import { classify } from "./state/classify";
 import { setActionBadge } from "./badge";
 import { checkForUpdate, installUpdate } from "./update";
 import type { Update } from "@tauri-apps/plugin-updater";
 import { isSnoozed, pruneSnoozed, snoozeUntil, timeLeft } from "./state/snooze";
-import { loadConfig, saveConfig, type Config, type Tab } from "./store/config";
+import { loadConfig, saveConfig, type Config, type Tab, type View } from "./store/config";
+import { Backlog } from "./Backlog";
+import { labelOf, RepoName, ago } from "./ui";
 import "./App.css";
 
 const TABS: { key: Tab; label: string }[] = [
@@ -18,36 +20,17 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "snoozed", label: "Snoozed" },
 ];
 
+const VIEWS: { key: View; label: string }[] = [
+  { key: "mine", label: "My PRs" },
+  { key: "backlog", label: "Backlog" },
+];
+
 const EMPTY: Record<Tab, string> = {
   snoozed: "Nothing is snoozed.",
   action: "All caught up. Nothing needs your action.",
   ready: "No PRs are ready to merge.",
   waiting: "Nothing is waiting on others.",
 };
-
-function ago(iso: string) {
-  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  if (mins < 1440) return `${Math.round(mins / 60)}h ago`;
-  return `${Math.round(mins / 1440)}d ago`;
-}
-
-const labelOf = (key: string) => {
-  const { owner, name } = repoDisplay(key);
-  return owner ? `${owner}/${name}` : name;
-};
-
-/** Repo name with the owner dimmed so the repo itself stands out. */
-function RepoName({ repo }: { repo: string }) {
-  const { owner, name } = repoDisplay(repo);
-  return (
-    <span className="repo-name">
-      <span className="owner">{owner}/</span>
-      {name}
-    </span>
-  );
-}
 
 const byNumber = (a: Classified, b: Classified) => b.pr.number - a.pr.number;
 
@@ -354,42 +337,67 @@ export default function App() {
         </p>
       ))}
 
-      <nav className="tabs" role="tablist">
-        {TABS.map(({ key, label }) => (
+      <nav className="views" aria-label="View">
+        {VIEWS.map(({ key, label }) => (
           <button
             key={key}
-            role="tab"
-            aria-selected={config.tab === key}
-            className={`tab ${key}${config.tab === key ? " selected" : ""}`}
-            onClick={() => update({ ...config, tab: key })}
+            aria-pressed={config.view === key}
+            className={config.view === key ? "selected" : ""}
+            onClick={() => update({ ...config, view: key })}
           >
-            {label} <span className="count">{counts[key]}</span>
+            {label}
           </button>
         ))}
       </nav>
 
-      {rows.length === 0 && config.repos.length > 0 && !loading && (
-        <p className="muted empty">{EMPTY[config.tab]}</p>
+      {config.view === "backlog" ? (
+        <Backlog
+          repos={config.repos}
+          results={results}
+          repoFilter={repoFilter}
+          loading={loading}
+          collapse={{ isCollapsed, toggler, chevron }}
+        />
+      ) : (
+        <>
+        <nav className="tabs" role="tablist">
+          {TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={config.tab === key}
+              className={`tab ${key}${config.tab === key ? " selected" : ""}`}
+              onClick={() => update({ ...config, tab: key })}
+            >
+              {label} <span className="count">{counts[key]}</span>
+            </button>
+          ))}
+        </nav>
+
+        {rows.length === 0 && config.repos.length > 0 && !loading && (
+          <p className="muted empty">{EMPTY[config.tab]}</p>
+        )}
+        <section className={`bucket ${config.tab}`}>
+          {groups.map(([repo, items]) => {
+            const subKey = `status:${config.tab}/${repo}`;
+            return (
+              <div key={repo} className="repo-sub">
+                {groups.length > 1 && (
+                  <h3 {...toggler(subKey)}>
+                    {chevron(subKey)}
+                    <RepoName repo={repo} /> <span className="count">{items.length}</span>
+                  </h3>
+                )}
+                {(groups.length === 1 || !isCollapsed(subKey)) &&
+                  items.map((item) => (
+                    <PrRow key={item.pr.url} item={item} showRepo={groups.length === 1} action={snoozeAction(item)} />
+                  ))}
+              </div>
+            );
+          })}
+        </section>
+        </>
       )}
-      <section className={`bucket ${config.tab}`}>
-        {groups.map(([repo, items]) => {
-          const subKey = `status:${config.tab}/${repo}`;
-          return (
-            <div key={repo} className="repo-sub">
-              {groups.length > 1 && (
-                <h3 {...toggler(subKey)}>
-                  {chevron(subKey)}
-                  <RepoName repo={repo} /> <span className="count">{items.length}</span>
-                </h3>
-              )}
-              {(groups.length === 1 || !isCollapsed(subKey)) &&
-                items.map((item) => (
-                  <PrRow key={item.pr.url} item={item} showRepo={groups.length === 1} action={snoozeAction(item)} />
-                ))}
-            </div>
-          );
-        })}
-      </section>
     </main>
   );
 }

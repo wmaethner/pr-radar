@@ -36,6 +36,19 @@ export interface PullRequest {
   comments: TimedComment[];
 }
 
+export interface Issue {
+  repo: string;
+  number: number;
+  title: string;
+  url: string;
+  createdAt: string;
+  updatedAt: string;
+  labels: string[];
+  assignees: string[]; // logins
+  commentCount: number;
+  linkedPrs: number[]; // open PRs that would close it
+}
+
 export type Bucket = "action" | "ready" | "waiting";
 
 export interface Classified {

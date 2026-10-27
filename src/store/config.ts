@@ -3,17 +3,19 @@ import type { Bucket } from "../github/types";
 import type { Snoozed } from "../state/snooze";
 
 export type Tab = Bucket | "snoozed";
+export type View = "mine" | "backlog";
 
 export interface Config {
   repos: string[]; // "owner/name" (GitHub) or "ado:org/project/repo" (Azure DevOps)
   pollMinutes: number;
+  view: View; // "mine": PRs you are involved in (status tabs); "backlog": other PRs needing review and open issues
   tab: Tab; // selected status tab
   snoozed: Snoozed; // PR url -> ISO time the snooze ends
   collapsed: string[]; // collapsed repo sub-group keys, e.g. "status:action/owner/name"
   account: string | null; // gh login to use; null = gh's active account
 }
 
-const DEFAULT: Config = { repos: [], pollMinutes: 5, tab: "action", snoozed: {}, collapsed: [], account: null };
+const DEFAULT: Config = { repos: [], pollMinutes: 5, view: "mine", tab: "action", snoozed: {}, collapsed: [], account: null };
 
 export async function loadConfig(): Promise<Config> {
   const raw = await invoke<string>("load_config");

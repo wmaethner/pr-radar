@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { PullRequest } from "./types";
+import type { Issue, PullRequest } from "./types";
 
 const REPO_QUERY = `
 query($owner: String!, $name: String!) {
@@ -16,6 +16,15 @@ query($owner: String!, $name: String!) {
           nodes { isResolved comments(first: 30) { nodes { author { login } createdAt } } }
         }
         comments(last: 30) { nodes { author { login } createdAt } }
+      }
+    }
+    issues(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
+      nodes {
+        number title url createdAt updatedAt
+        comments { totalCount }
+        labels(first: 10) { nodes { name } }
+        assignees(first: 10) { nodes { login } }
+        closedByPullRequestsReferences(first: 5, includeClosedPrs: false) { nodes { number } }
       }
     }
   }
@@ -54,14 +63,37 @@ function toPr(repo: string, n: any): PullRequest {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toIssue(repo: string, n: any): Issue {
+  return {
+    repo,
+    number: n.number,
+    title: n.title,
+    url: n.url,
+    createdAt: n.createdAt,
+    updatedAt: n.updatedAt,
+    labels: n.labels.nodes.map((l: { name: string }) => l.name),
+    assignees: n.assignees.nodes.map((a: { login: string }) => a.login),
+    commentCount: n.comments.totalCount,
+    linkedPrs: n.closedByPullRequestsReferences.nodes.map((p: { number: number }) => p.number),
+  };
+}
+
 /** Fetch one repo's open PRs ("owner/name"), as the viewer of `account` (null = gh's active account). */
-export async function fetchRepo(repo: string, account: string | null): Promise<{ me: string; prs: PullRequest[] }> {
+export async function fetchRepo(
+  repo: string,
+  account: string | null,
+): Promise<{ me: string; prs: PullRequest[]; issues: Issue[] }> {
   const [owner, name] = repo.split("/");
   const data = await gql<{
     viewer: { login: string };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    repository: { pullRequests: { nodes: any[] } } | null;
+    repository: { pullRequests: { nodes: any[] }; issues: { nodes: any[] } } | null;
   }>({ owner, name }, account);
   if (!data.repository) throw new Error("Repo not found or no access");
-  return { me: data.viewer.login, prs: data.repository.pullRequests.nodes.map((n) => toPr(repo, n)) };
+  return {
+    me: data.viewer.login,
+    prs: data.repository.pullRequests.nodes.map((n) => toPr(repo, n)),
+    issues: data.repository.issues.nodes.map((n) => toIssue(repo, n)),
+  };
 }

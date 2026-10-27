@@ -27,8 +27,11 @@ src/ado/repo.ts        ADO repo keys ("ado:org/project/repo"), parseAdoRepo() fo
 src/ado/provider.ts    Azure DevOps Provider (key "ado:org/project/repo")
 src/ado/client.ts      Azure DevOps REST via az_rest; maps votes/threads/iterations to PullRequest
 src/state/classify.ts  Pure logic: classify(pr, me) -> Classified | null
+src/state/backlog.ts   Pure backlog logic: PRs needing a reviewer, issue assignment (separate from classify)
 src/state/snooze.ts    Pure snooze helpers (expiry, pruning, time left)
 src/store/config.ts    Config (repos, pollMinutes, tab, snoozed, collapsed, account) load/save
+src/Backlog.tsx        Backlog view: PRs needing review (with assigned reviewers) and open issues, grouped by repo
+src/ui.tsx             Small shared UI helpers (ago, RepoName, labelOf)
 src/App.tsx            UI, polling, repo filter, status tabs with per-repo collapsible groups, repo management
 ```
 
@@ -44,6 +47,7 @@ To add a code host, implement `Provider` (`src/providers/types.ts`) in its own f
 - **`gh` and `az` lookup is per platform** (see `docs/architecture.md`): on macOS fixed paths (`/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`) because GUI apps don't inherit the shell PATH; on Windows PATH plus the default install dirs, `az` run via the Azure CLI's bundled Python (the `.cmd` wrapper can't take arbitrary args), and every child process started with `CREATE_NO_WINDOW`. Windows support has only been compiled in CI, not run on a real machine.
 - **Config** is JSON in the Tauri app config dir (`config.json`), read and written via Rust commands.
 - **`classify.ts` is pure** (no I/O) and is where the product behavior lives. Authored PRs: draft, CI failing, unresolved threads (cleared only by a reply or resolving; pushes don't clear them), changes requested (cleared by a newer commit), both ignored for a reviewer who already reviewed and has been re-requested, new top-level comments from others (cleared by any later activity of mine: comment, review, thread reply or push), approved. Reviewed PRs: review or re-review requested, replies to your threads, new commits since your review, else waiting. Once your latest verdict is an approval none of the last two apply: only a re-request, a dismissed approval or a later changes-requested review brings the PR back. PRs the user isn't involved in return `null`. Change it together with tests.
+- **Backlog view** (`Config.view`, top-level toggle "My PRs" / "Backlog"): shows what the user *could* pick up, beyond PRs they are on. PRs: open, non-draft, not the user's, not approved, and not already in My PRs (`classify` returns null); ones with no reviewer first, each showing assigned reviewers (✓ = already reviewed). Issues: all open issues, unassigned first, then assigned to you, then to others (shown with their assignees); open linked PRs are noted. It never affects the badge or snoozes. GitHub only for now (`Provider.fetchRepo` returns `issues` optionally); ADO is tracked in issue #19.
 - **Snooze**: a display layer over `classify`, which is unaware of it. `Config.snoozed` maps PR url -> end time; only `action` PRs can be snoozed (24h fixed). A snoozed PR shows in the Snoozed tab and is not counted in the badge; when the time passes it is simply classified normally again. A snooze never ends early because of new activity.
 - **Dock badge**: `App.tsx` sets the badge (via `src/badge.ts`: Dock badge count on macOS, a drawn taskbar overlay icon on Windows) to the number of non-snoozed `action` PRs across all repos (ignores the repo filter). On macOS it needs the `core:window:allow-set-badge-count` permission in `src-tauri/capabilities/default.json`; capability changes need a full app restart, not just hot reload.
 - Links open in the system browser via `@tauri-apps/plugin-opener`.
@@ -52,7 +56,7 @@ To add a code host, implement `Provider` (`src/providers/types.ts`) in its own f
 
 - Review requests to **teams** are ignored (GitHub: only `User` reviewers; ADO: group reviewers skipped).
 - ADO: reviewers are only detected from the PR's reviewer list (not ad-hoc commenters), no paging beyond 50 PRs per repo, and each PR costs 2-4 `az` calls.
-- Query limits with no paging: 50 PRs per repo, 50 threads, last 30 comments, last 50 reviews.
+- Query limits with no paging: 50 PRs and 50 issues per repo, 50 threads, last 30 comments, last 50 reviews.
 - One `gh` process per repo per refresh.
 - No UI for `pollMinutes` (edit the config file).
 - No desktop notifications, tray icon or badge count.

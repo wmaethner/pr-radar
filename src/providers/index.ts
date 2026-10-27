@@ -35,9 +35,9 @@ export async function fetchAll(
       let result: RepoResult;
       try {
         if (!provider) throw new Error("Unrecognised repo");
-        result = { repo, ...(await provider.fetchRepo(repo, ctx)) };
+        result = { repo, issues: [], ...(await provider.fetchRepo(repo, ctx)) };
       } catch (e) {
-        result = { repo, me: "", prs: [], error: String(e) };
+        result = { repo, me: "", prs: [], issues: [], error: String(e) };
       }
       onResult?.(result);
       return result;

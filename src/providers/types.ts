@@ -1,10 +1,11 @@
-import type { PullRequest } from "../github/types";
+import type { Issue, PullRequest } from "../github/types";
 
 /** What one repo's fetch produced. `me` is the viewer's identity on that host; "" when the fetch failed. */
 export interface RepoResult {
   repo: string;
   me: string;
   prs: PullRequest[];
+  issues: Issue[];
   error?: string;
 }
 
@@ -23,5 +24,5 @@ export interface Provider {
   /** Split a key for display: `owner` is the muted prefix, `name` the repo. */
   display(key: string): { owner: string; name: string };
   /** Fetch one repo's open PRs. May throw: `fetchAll` turns that into `RepoResult.error`. */
-  fetchRepo(key: string, ctx: FetchContext): Promise<{ me: string; prs: PullRequest[] }>;
+  fetchRepo(key: string, ctx: FetchContext): Promise<{ me: string; prs: PullRequest[]; issues?: Issue[] }>;
 }
