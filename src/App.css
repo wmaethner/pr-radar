@@ -3,6 +3,7 @@
   font-size: 14px;
   color: #1c1c1e;
   background: #f5f5f7;
+  --bg: #f5f5f7;
   --muted: #6e6e73;
   --card: #fff;
   --border: #d2d2d7;
@@ -13,6 +14,7 @@
   :root {
     color: #f5f5f7;
     background: #1c1c1e;
+    --bg: #1c1c1e;
     --muted: #98989d;
     --card: #2c2c2e;
     --border: #3a3a3c;
@@ -22,12 +24,7 @@
 }
 body { margin: 0; }
 .app { max-width: 1000px; margin: 0 auto; padding: 16px; }
-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
-.brand { display: flex; flex-direction: column; margin-right: auto; }
-header h1 { font-size: 18px; margin: 0; white-space: nowrap; }
 .updated { font-size: 12px; white-space: nowrap; }
-.controls, .actions { display: flex; align-items: center; gap: 8px; }
-.controls select { max-width: 190px; text-overflow: ellipsis; }
 button, select { white-space: nowrap; }
 button, select, input {
   font: inherit; color: inherit; background: var(--card);
@@ -36,23 +33,18 @@ button, select, input {
 button { cursor: pointer; }
 .muted { color: var(--muted); }
 .error { color: #d70015; }
-.repos { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 16px; }
-.repos form { display: flex; gap: 8px; margin-bottom: 8px; }
-.repos input { flex: 1; }
-.repos ul { list-style: none; margin: 0; padding: 0; }
-.repos li { display: flex; justify-content: space-between; padding: 4px 0; }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 8px 0 12px; }
+.tabs { display: flex; gap: 4px; }
 .tab { background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 8px 12px; margin-bottom: -1px; color: var(--muted); font-weight: 500; }
 .tab:hover { color: inherit; }
 .tab.selected { color: inherit; border-bottom-color: #0a84ff; }
 .tab:focus-visible { outline: 2px solid #0a84ff; outline-offset: -2px; }
-.empty { margin: 24px 0; text-align: center; }
+.empty { margin: 16px 0; text-align: center; }
 .count { background: var(--border); border-radius: 10px; padding: 0 7px; margin-left: 4px; font-size: 12px; text-transform: none; letter-spacing: 0; }
 .tab.action .count { background: #ff3b30; color: #fff; }
 .tab.ready .count { background: #34c759; color: #fff; }
 .pr {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  background: var(--card); border: 1px solid var(--border); border-left-width: 4px;
+  background: var(--bg); border: 1px solid var(--border); border-left-width: 4px;
   border-radius: 8px; padding: 10px 14px; margin-bottom: 6px;
   text-decoration: none; color: inherit;
 }
@@ -86,9 +78,52 @@ h2[role="button"]:hover, h3[role="button"]:hover { color: inherit; }
 .update-banner > span:first-child { margin-right: auto; }
 .refreshing { font-size: 12px; margin: 4px 0; }
 
-.views { display: flex; gap: 4px; margin: 8px 0 0; }
-.views button { font-size: 13px; padding: 4px 12px; }
-.views button.selected { border-color: #0a84ff; color: #0a84ff; font-weight: 600; }
-.backlog-section h2 { font-size: 14px; margin: 16px 0 6px; }
-.backlog-section .empty { margin: 4px 0 8px; }
 .tag.assigned { background: color-mix(in srgb, var(--muted) 16%, transparent); color: var(--muted); }
+
+/* Header: brand, view switch, filter and actions in one slim bar */
+header {
+  position: sticky; top: 8px; z-index: 10;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  margin: 0 0 16px; padding: 10px 14px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.brand { display: flex; flex-direction: column; line-height: 1.2; margin-right: auto; }
+header h1 { font-size: 16px; font-weight: 700; margin: 0; white-space: nowrap; letter-spacing: -0.01em; }
+.views { display: flex; gap: 3px; padding: 3px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; }
+.views button { border: none; background: none; border-radius: 7px; padding: 7px 22px; font-size: 15px; color: var(--muted); font-weight: 600; }
+.views button:hover:not(.selected) { color: inherit; background: var(--border); }
+.views button.selected { background: #0a84ff; color: #fff; box-shadow: 0 1px 3px rgba(10, 132, 255, 0.45); }
+.views button:focus-visible { outline: 2px solid #0a84ff; outline-offset: 2px; }
+.header-end { display: flex; align-items: center; gap: 6px; }
+.header-end > select { max-width: 180px; text-overflow: ellipsis; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 6px; border-color: transparent; background: none; color: var(--muted); }
+.icon-btn:hover:not(:disabled), .icon-btn[aria-expanded="true"] { color: inherit; background: var(--border); }
+.icon-btn:disabled { cursor: default; }
+.icon-btn.spinning svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.settings { position: relative; }
+.popover {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: 320px; max-width: calc(100vw - 32px);
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+}
+.popover .field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.popover .field > span { color: var(--muted); }
+.popover .section-title { font-weight: 600; margin: 14px 0 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+.add-repo { display: flex; gap: 6px; }
+.add-repo input { flex: 1; min-width: 0; }
+.popover .error { margin: 6px 0 0; font-size: 12px; }
+.repo-list { list-style: none; margin: 8px 0 0; padding: 0; max-height: 220px; overflow-y: auto; }
+.repo-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 0; }
+.repo-list li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repo-list .icon-btn { min-width: 24px; height: 24px; font-size: 12px; }
+.version { font-size: 12px; margin-top: 12px; }
+
+/* Panels: each area of the app is its own window with a title bar and a body */
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); overflow: hidden; }
+.panel-head { margin: 0; padding: 0 14px; background: color-mix(in srgb, var(--border) 35%, var(--card)); border-bottom: 1px solid var(--border); }
+h2.panel-head { padding: 10px 14px; font-size: 14px; font-weight: 600; }
+.panel-body { padding: 4px 14px 14px; }
+.panel .tab { margin-bottom: 0; }

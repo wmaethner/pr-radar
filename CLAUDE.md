@@ -31,6 +31,7 @@ src/state/backlog.ts   Pure backlog logic: PRs needing a reviewer, issue assignm
 src/state/snooze.ts    Pure snooze helpers (expiry, pruning, time left)
 src/store/config.ts    Config (repos, pollMinutes, tab, snoozed, collapsed, account) load/save
 src/Backlog.tsx        Backlog view: PRs needing review (with assigned reviewers) and open issues, grouped by repo
+src/Settings.tsx       Gear popover in the header: account, refresh interval, add/remove repos, version
 src/ui.tsx             Small shared UI helpers (ago, RepoName, labelOf)
 src/App.tsx            UI, polling, repo filter, status tabs with per-repo collapsible groups, repo management
 ```
@@ -58,7 +59,6 @@ To add a code host, implement `Provider` (`src/providers/types.ts`) in its own f
 - ADO: reviewers are only detected from the PR's reviewer list (not ad-hoc commenters), no paging beyond 50 PRs per repo, and each PR costs 2-4 `az` calls.
 - Query limits with no paging: 50 PRs and 50 issues per repo, 50 threads, last 30 comments, last 50 reviews.
 - One `gh` process per repo per refresh.
-- No UI for `pollMinutes` (edit the config file).
 - No desktop notifications, tray icon or badge count.
 - No tests for `client.ts`, `config.ts` or the UI.
 - Missing or unauthenticated `gh` (or a saved account that has since been logged out) surfaces as a raw error string per repo.

@@ -105,10 +105,11 @@ function Section<T>({
   const total = groups.reduce((n, [, list]) => n + list.length, 0);
   const single = groups.length === 1;
   return (
-    <section className="backlog-section">
-      <h2>
+    <section className="panel">
+      <h2 className="panel-head">
         {title} <span className="count">{total}</span>
       </h2>
+      <div className="panel-body">
       {total === 0 && <p className="muted empty">{empty}</p>}
       {groups.map(([repo, list]) => {
         const key = `backlog:${id}/${repo}`;
@@ -124,6 +125,7 @@ function Section<T>({
           </div>
         );
       })}
+      </div>
     </section>
   );
 }

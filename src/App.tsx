@@ -10,6 +10,7 @@ import type { Update } from "@tauri-apps/plugin-updater";
 import { isSnoozed, pruneSnoozed, snoozeUntil, timeLeft } from "./state/snooze";
 import { loadConfig, saveConfig, type Config, type Tab, type View } from "./store/config";
 import { Backlog } from "./Backlog";
+import { Settings } from "./Settings";
 import { labelOf, RepoName, ago } from "./ui";
 import "./App.css";
 
@@ -86,9 +87,6 @@ export default function App() {
   const loading = pending.length > 0;
   const runId = useRef(0);
   const [repoFilter, setRepoFilter] = useState("");
-  const [newRepo, setNewRepo] = useState("");
-  const [addError, setAddError] = useState<string | null>(null);
-  const [showRepos, setShowRepos] = useState(false);
   const [updated, setUpdated] = useState<Date | null>(null);
   const [accounts, setAccounts] = useState<GhAccount[]>([]);
   const [newVersion, setNewVersion] = useState<Update | null>(null);
@@ -166,14 +164,13 @@ export default function App() {
   });
   const chevron = (key: string) => <span className="chevron">{isCollapsed(key) ? "▸" : "▾"}</span>;
 
-  const addRepo = async () => {
-    if (!config) return;
-    const repo = parseAnyRepo(newRepo);
-    if (!repo) return setAddError("Not a recognised repo. Use owner/name, a github.com URL or an Azure DevOps repo URL.");
-    if (config.repos.includes(repo)) return setAddError(`${repo} is already added.`);
-    setAddError(null);
-    setNewRepo("");
+  const addRepo = async (input: string): Promise<string | null> => {
+    if (!config) return null;
+    const repo = parseAnyRepo(input);
+    if (!repo) return "Not a recognised repo. Use owner/name, a github.com URL or an Azure DevOps repo URL.";
+    if (config.repos.includes(repo)) return `${labelOf(repo)} is already added.`;
     await update({ ...config, repos: [...config.repos, repo] });
+    return null;
   };
 
   const visible = useMemo(
@@ -243,7 +240,19 @@ export default function App() {
             </span>
           )}
         </div>
-        <div className="controls">
+        <nav className="views" aria-label="View">
+          {VIEWS.map(({ key, label }) => (
+            <button
+              key={key}
+              aria-pressed={config.view === key}
+              className={config.view === key ? "selected" : ""}
+              onClick={() => update({ ...config, view: key })}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="header-end">
           <select title="Repo filter" value={repoFilter} onChange={(e) => setRepoFilter(e.target.value)}>
             <option value="">All repos</option>
             {config.repos.map((r) => (
@@ -252,25 +261,19 @@ export default function App() {
               </option>
             ))}
           </select>
-          {accounts.length > 0 && (
-            <select
-              title="GitHub account"
-              value={config.account ?? accounts.find((a) => a.active)?.login ?? ""}
-              onChange={(e) => update({ ...config, account: e.target.value })}
-            >
-              {accounts.map((a) => (
-                <option key={a.login} value={a.login}>
-                  @{a.login}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-        <div className="actions">
-          <button onClick={() => refresh(config.repos, config.account)} disabled={loading}>
-            {loading ? `Refreshing… ${config.repos.length - pending.length}/${config.repos.length}` : "Refresh"}
+          <button
+            className={`icon-btn${loading ? " spinning" : ""}`}
+            onClick={() => refresh(config.repos, config.account)}
+            disabled={loading}
+            title={loading ? `Refreshing… ${config.repos.length - pending.length}/${config.repos.length}` : "Refresh"}
+            aria-label="Refresh"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-3-6.7" />
+              <path d="M21 3v6h-6" />
+            </svg>
           </button>
-          <button onClick={() => setShowRepos((s) => !s)}>Repos ({config.repos.length})</button>
+          <Settings config={config} accounts={accounts} onChange={update} onAddRepo={addRepo} />
         </div>
       </header>
 
@@ -296,59 +299,17 @@ export default function App() {
         </div>
       )}
 
-      {showRepos && (
-        <section className="repos">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              addRepo();
-            }}
-          >
-            <input
-              value={newRepo}
-              onChange={(e) => (setNewRepo(e.target.value), setAddError(null))}
-              placeholder="owner/name, GitHub URL or Azure DevOps repo URL"
-            />
-            <button type="submit">Add</button>
-          </form>
-          {addError && <p className="error">{addError}</p>}
-          <ul>
-            {config.repos.map((r) => (
-              <li key={r}>
-                {labelOf(r)}
-                <button onClick={() => update({ ...config, repos: config.repos.filter((x) => x !== r) })}>
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
       {loading && (
         <p className="muted refreshing">
           Refreshing {pending.map(labelOf).join(", ")}…
         </p>
       )}
-      {config.repos.length === 0 && <p className="muted">No repos yet. Click “Repos” to add one.</p>}
+      {config.repos.length === 0 && <p className="muted">No repos yet. Open settings (⚙) to add one.</p>}
       {errors.map((e) => (
         <p key={e.repo} className="error">
           {labelOf(e.repo)}: {e.error}
         </p>
       ))}
-
-      <nav className="views" aria-label="View">
-        {VIEWS.map(({ key, label }) => (
-          <button
-            key={key}
-            aria-pressed={config.view === key}
-            className={config.view === key ? "selected" : ""}
-            onClick={() => update({ ...config, view: key })}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
 
       {config.view === "backlog" ? (
         <Backlog
@@ -359,8 +320,8 @@ export default function App() {
           collapse={{ isCollapsed, toggler, chevron }}
         />
       ) : (
-        <>
-        <nav className="tabs" role="tablist">
+        <section className="panel">
+        <nav className="tabs panel-head" role="tablist">
           {TABS.map(({ key, label }) => (
             <button
               key={key}
@@ -374,6 +335,7 @@ export default function App() {
           ))}
         </nav>
 
+        <div className="panel-body">
         {rows.length === 0 && config.repos.length > 0 && !loading && (
           <p className="muted empty">{EMPTY[config.tab]}</p>
         )}
@@ -396,7 +358,8 @@ export default function App() {
             );
           })}
         </section>
-        </>
+        </div>
+        </section>
       )}
     </main>
   );
