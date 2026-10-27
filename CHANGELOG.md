@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0](https://github.com/wmaethner/pr-radar/compare/v0.2.0...v0.3.0) (2026-10-27)
+
+
+### Features
+
+* add a Backlog view with PRs needing review and open issues ([#20](https://github.com/wmaethner/pr-radar/issues/20)) ([50525a8](https://github.com/wmaethner/pr-radar/commit/50525a8808c67ec28d43c66adabdfe0039088cc6))
+* redesign the header with a settings popover and panelled layout ([#22](https://github.com/wmaethner/pr-radar/issues/22)) ([fd0766a](https://github.com/wmaethner/pr-radar/commit/fd0766a3f3db476478a1ba25c65596314d53b232))
+* show each repo's results as soon as it refreshes ([#16](https://github.com/wmaethner/pr-radar/issues/16)) ([818346d](https://github.com/wmaethner/pr-radar/commit/818346d74a364d816305db950c86e3d141fd2216))
+
 ## [0.2.0](https://github.com/wmaethner/pr-radar/compare/v0.1.2...v0.2.0) (2026-10-26)
 
 
