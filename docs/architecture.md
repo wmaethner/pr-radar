@@ -24,7 +24,7 @@ Nothing in the app stores credentials.
 
 ## Building a release
 
-`npm run tauri build` runs `npm run build`, compiles Rust in release mode and produces an installer for the platform it runs on. With `"targets": "all"` that is a `.app` and `.dmg` on macOS and `.msi` and NSIS `.exe` installers on Windows. The built app needs no Node or dev server. Config lives in the Tauri app config dir as `config.json`.
+`npm run tauri build` runs `npm run build`, compiles Rust in release mode and produces an installer for the platform it runs on. With `"targets": "all"` that is a `.app` and `.dmg` on macOS and `.msi` and NSIS `.exe` installers on Windows. The built app needs no Node or dev server. Config lives in the Tauri app config dir as `config.json` (`config.dev.json` for debug builds such as `tauri dev`, so development leaves the installed app's settings alone).
 
 Releases are built by CI on a version tag and installed copies self-update; see [releasing.md](./releasing.md). Windows builds, and Apple code signing and notarization, are not set up yet.
 

@@ -160,10 +160,13 @@ fn gh_accounts() -> Result<String, String> {
     }
 }
 
+/// Debug builds (`tauri dev`) use their own file so development never touches the installed app's settings.
+const CONFIG_NAME: &str = if cfg!(debug_assertions) { "config.dev.json" } else { "config.json" };
+
 fn config_file(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    Ok(dir.join("config.json"))
+    Ok(dir.join(CONFIG_NAME))
 }
 
 /// Returns the stored config JSON, or "" when none exists yet.
