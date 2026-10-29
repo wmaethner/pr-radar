@@ -1,6 +1,7 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { ReactNode } from "react";
 import type { Issue, PullRequest } from "../github/types";
+import { OpenRepo } from "../components/OpenRepo";
 import type { RepoResult } from "../providers";
 import { backlogIssues, backlogPrs, type BacklogPr, type IssueAssignment, type Reviewer } from "../state/backlog";
 import { ago, RepoName } from "../components/ui";
@@ -93,6 +94,7 @@ function Section<T>({
   empty,
   groups,
   collapse,
+  codeRoot,
   render,
 }: {
   id: string;
@@ -100,6 +102,7 @@ function Section<T>({
   empty: string;
   groups: [string, T[]][];
   collapse: Collapse;
+  codeRoot: string | null;
   render: (row: T, showRepo: boolean) => ReactNode;
 }) {
   const total = groups.reduce((n, [, list]) => n + list.length, 0);
@@ -119,6 +122,7 @@ function Section<T>({
               <h3 {...collapse.toggler(key)}>
                 {collapse.chevron(key)}
                 <RepoName repo={repo} /> <span className="count">{list.length}</span>
+                <OpenRepo repo={repo} root={codeRoot} />
               </h3>
             )}
             {(single || !collapse.isCollapsed(key)) && list.map((row) => render(row, single))}
@@ -136,12 +140,14 @@ export function Backlog({
   repoFilter,
   loading,
   collapse,
+  codeRoot,
 }: {
   repos: string[];
   results: Record<string, RepoResult>;
   repoFilter: string;
   loading: boolean;
   collapse: Collapse;
+  codeRoot: string | null;
 }) {
   const shown = repos.filter((r) => (!repoFilter || r === repoFilter) && results[r] && !results[r].error);
   const prRows = shown.flatMap((r): [string, BacklogPr][] =>
@@ -158,6 +164,7 @@ export function Backlog({
         empty={loading ? "Loading…" : "No open PRs need a reviewer."}
         groups={byRepo(repos, prRows)}
         collapse={collapse}
+        codeRoot={codeRoot}
         render={(item, showRepo) => <PrBacklogRow key={item.pr.url} item={item} showRepo={showRepo} />}
       />
       <Section
@@ -166,6 +173,7 @@ export function Backlog({
         empty={loading ? "Loading…" : "No open issues."}
         groups={byRepo(repos, issueRows)}
         collapse={collapse}
+        codeRoot={codeRoot}
         render={(i, showRepo) => (
           <IssueRow key={i.issue.url} issue={i.issue} assignment={i.assignment} showRepo={showRepo} />
         )}

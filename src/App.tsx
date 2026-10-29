@@ -78,6 +78,7 @@ export default function App() {
           results={results}
           repoFilter={repoFilter}
           loading={loading}
+          codeRoot={config.codeRoot}
           collapse={collapse}
         />
       ) : (

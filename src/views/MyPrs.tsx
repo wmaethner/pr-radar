@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Classified } from "../github/types";
 import type { Collapse } from "./Backlog";
+import { OpenRepo } from "../components/OpenRepo";
 import { PrRow, type RowAction } from "../components/PrRow";
 import { groupByRepo } from "../state/group";
 import { snoozeUntil, tabOf, timeLeft } from "../state/snooze";
@@ -99,6 +100,7 @@ export function MyPrs({
                   <h3 {...toggler(subKey)}>
                     {chevron(subKey)}
                     <RepoName repo={repo} /> <span className="count">{items.length}</span>
+                    <OpenRepo repo={repo} root={config.codeRoot} />
                   </h3>
                 )}
                 {(groups.length === 1 || !isCollapsed(subKey)) &&

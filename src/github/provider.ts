@@ -1,7 +1,7 @@
 import type { Provider } from "../providers/types";
 import { fetchRepo } from "./client";
 import { ghHealth } from "./health";
-import { parseRepo } from "./repo";
+import { matchesGithubRemote, parseRepo } from "./repo";
 import { listRepos } from "./repos";
 
 /** GitHub repos are stored as "owner/name". It owns every key that isn't another provider's. */
@@ -14,6 +14,7 @@ export const github: Provider = {
     const [owner, name] = key.split("/");
     return { owner, name };
   },
+  matchesRemote: matchesGithubRemote,
   fetchRepo: (key, ctx) => fetchRepo(key, ctx.account),
   listRepos: (ctx, cursor) => listRepos(ctx.account, cursor),
   health: ghHealth,

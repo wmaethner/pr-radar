@@ -53,3 +53,18 @@ export function parseAdoRepo(input: string): string | null {
   const project = git === 1 ? segs[0] : repo;
   return adoKey({ org, project, repo });
 }
+
+/** Whether a remote URL (https, legacy visualstudio.com or ssh form) points at the ADO repo key. */
+export function matchesAdoRemote(key: string, remote: string): boolean {
+  const r = fromAdoKey(key);
+  if (!r) return false;
+  let url = remote.trim().toLowerCase().replace(/\.git$/, "").replace(/\/$/, "");
+  try {
+    url = decodeURIComponent(url);
+  } catch {
+    // keep the raw text
+  }
+  const [org, project, repo] = [r.org, r.project, r.repo].map((x) => x.toLowerCase());
+  if (!url.includes(org)) return false;
+  return url.endsWith(`/${project}/_git/${repo}`) || url.endsWith(`/${project}/${repo}`) || (project === repo && url.endsWith(`/_git/${repo}`));
+}

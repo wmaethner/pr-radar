@@ -9,6 +9,10 @@
     "core:window:allow-set-overlay-icon",
     "opener:default",
     "opener:allow-reveal-item-in-dir",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "vscode://*" }]
+    },
     "updater:default",
     "process:allow-restart"
   ]

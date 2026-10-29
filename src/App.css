@@ -205,3 +205,8 @@ header h1 { font-size: 16px; font-weight: 700; margin: 0; white-space: nowrap; l
 h2.panel-head { padding: 10px 14px; font-size: 14px; font-weight: 600; }
 .panel-body { padding: 4px 14px 14px; }
 .panel .tab { margin-bottom: 0; }
+
+.open-repo { min-width: 24px; height: 22px; font-size: 11px; font-family: ui-monospace, Menlo, monospace; margin-left: 4px; vertical-align: middle; }
+.open-repo-error { font-size: 12px; font-weight: 400; margin-left: 8px; }
+.popover .field.stack { flex-direction: column; align-items: stretch; gap: 4px; }
+.popover .field.stack > span { font-size: 12px; }

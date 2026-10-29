@@ -5,6 +5,7 @@ import type { GhAccount } from "../github/accounts";
 import { repoListers } from "../providers";
 import { RepoPicker } from "./RepoPicker";
 import type { Config } from "../store/config";
+import { OpenRepo } from "./OpenRepo";
 import { labelOf } from "./ui";
 
 const POLL_CHOICES = [1, 2, 5, 10, 15, 30];
@@ -150,6 +151,18 @@ export function Settings({
             </select>
           </label>
 
+          <label className="field stack">
+            <span>Code folder (where your clones live, for “Open in VS Code”)</span>
+            <input
+              defaultValue={config.codeRoot ?? ""}
+              placeholder="~/Documents/GitHub"
+              onBlur={(e) => {
+                const value = e.target.value.trim() || null;
+                if (value !== config.codeRoot) onChange({ ...config, codeRoot: value });
+              }}
+            />
+          </label>
+
           <div className="section-title">
             Repos <span className="count">{config.repos.length}</span>
           </div>
@@ -186,6 +199,7 @@ export function Settings({
             {config.repos.map((r) => (
               <li key={r}>
                 <span title={labelOf(r)}>{labelOf(r)}</span>
+                <OpenRepo repo={r} root={config.codeRoot} />
                 <button
                   className="icon-btn"
                   title={`Remove ${labelOf(r)}`}
