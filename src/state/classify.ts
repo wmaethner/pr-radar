@@ -61,7 +61,10 @@ function classifyAuthored(pr: PullRequest, me: string): Classified {
       .filter((t): t is string => t !== null)
       .sort()
       .at(-1) ?? null;
-  const newComment = pr.comments.some((c) => c.author?.login !== me && after(c.createdAt, lastMine));
+  // Bot comments (Copilot reporting it finished, CI summaries) are informational, not a request.
+  const newComment = pr.comments.some(
+    (c) => c.author?.login !== me && !c.author?.isBot && after(c.createdAt, lastMine),
+  );
   if (newComment) return make("action", "New comment on your PR");
 
   if (pr.reviewDecision === "APPROVED") return make("ready", "Approved, ready to merge");

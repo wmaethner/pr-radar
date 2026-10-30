@@ -80,6 +80,10 @@ describe("authored PRs", () => {
     const comments = [{ author: them, createdAt: "2026-01-02T00:00:00Z" }];
     expect(classify(pr({ comments }), ME)?.reason).toBe("New comment on your PR");
   });
+  it("ignores top-level comments from bots", () => {
+    const comments = [{ author: { login: "Copilot", isBot: true }, createdAt: "2026-01-02T00:00:00Z" }];
+    expect(classify(pr({ comments }), ME)?.reason).toBe("Waiting on reviewers");
+  });
   it("clears a top-level comment once I reply in a review thread", () => {
     const comments = [{ author: them, createdAt: "2026-01-02T00:00:00Z" }];
     const reviews = [{ author: mine, state: "COMMENTED" as const, submittedAt: "2026-01-03T00:00:00Z" }];

@@ -15,7 +15,7 @@ query($owner: String!, $name: String!) {
         reviewThreads(first: 50) {
           nodes { isResolved comments(first: 30) { nodes { author { login } createdAt } } }
         }
-        comments(last: 30) { nodes { author { login } createdAt } }
+        comments(last: 30) { nodes { author { login __typename } createdAt } }
       }
     }
     issues(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
@@ -59,7 +59,10 @@ function toPr(repo: string, n: any): PullRequest {
       .filter(Boolean),
     reviews: n.reviews.nodes,
     threads: n.reviewThreads.nodes,
-    comments: n.comments.nodes,
+    comments: n.comments.nodes.map((c: { author: { login: string; __typename: string } | null; createdAt: string }) => ({
+      author: c.author && { login: c.author.login, isBot: c.author.__typename === "Bot" },
+      createdAt: c.createdAt,
+    })),
   };
 }
 
