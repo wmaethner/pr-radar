@@ -42,7 +42,7 @@ The CI workflow (`.github/workflows/ci.yml`) runs `tsc` and the tests on every P
 ## Installing
 
 - Download the `.dmg` from the Releases page and drag the app to Applications.
-- Builds aren't Apple-signed or notarized, so the first launch shows a Gatekeeper warning. Right-click the app, choose Open, and confirm. (Or run `xattr -cr /Applications/pr-radar.app` once.) Later updates installed by the app itself should not prompt again.
+- Builds aren't Apple-signed or notarized, so the first launch shows a Gatekeeper warning. Right-click the app, choose Open, and confirm. (Or run `xattr -cr "/Applications/PR Radar.app"` once.) Later updates installed by the app itself should not prompt again.
 - **Windows:** download the `.exe` (NSIS) or `.msi` installer from the Releases page and run it. SmartScreen will warn because the installer isn't signed; click More info, then Run anyway.
 - Each machine still needs `gh` (and `az` for Azure DevOps) installed and logged in.
 
@@ -53,7 +53,7 @@ The CI workflow (`.github/workflows/ci.yml`) runs `tsc` and the tests on every P
 
 ## Apple signing and notarization (to do)
 
-Without this, a fresh browser download shows "pr-radar is damaged and can't be opened". The workaround is `xattr -cr /Applications/pr-radar.app`. Signing and notarizing removes the need for it. Requires a paid Apple Developer account (the Account Holder role is needed to create the certificate).
+Without this, a fresh browser download shows "PR Radar is damaged and can't be opened". The workaround is `xattr -cr "/Applications/PR Radar.app"`. Signing and notarizing removes the need for it. Requires a paid Apple Developer account (the Account Holder role is needed to create the certificate).
 
 1. **Create a Developer ID Application certificate.** The Apple Development and Apple Distribution certificates do not work: they are for running on your own devices and for the App Store. In Xcode: Settings, Accounts, select the team, Manage Certificates, **+**, Developer ID Application. Or create it at developer.apple.com under Certificates.
 2. **Export it** from Keychain Access (right-click, Export) as a `.p12` with a password.
