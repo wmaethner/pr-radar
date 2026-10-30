@@ -31,3 +31,8 @@ export async function loadConfig(): Promise<Config> {
 export async function saveConfig(config: Config): Promise<void> {
   await invoke("save_config", { json: JSON.stringify(config, null, 2) });
 }
+
+/** Full path of the config file, for revealing it in the file manager. */
+export function configPath(): Promise<string> {
+  return invoke<string>("config_path");
+}
