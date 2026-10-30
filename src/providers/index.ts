@@ -9,6 +9,14 @@ export const providers: Provider[] = [ado, github];
 
 export const providerOf = (key: string): Provider | undefined => providers.find((p) => p.owns(key));
 
+/**
+ * Providers worth showing a sign-in status for: those that ask to always be checked (GitHub, for
+ * first run), others only once the user has a repo there, so an unused CLI never reports a problem.
+ */
+export function healthProviders(repos: string[]): Provider[] {
+  return providers.filter((p) => p.health && (p.alwaysCheckHealth || repos.some((r) => p.owns(r))));
+}
+
 /** Accepts anything a provider recognises; returns the repo key or null. */
 export function parseAnyRepo(input: string): string | null {
   for (const p of providers) {

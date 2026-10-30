@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { listAccounts, type GhAccount } from "./github/accounts";
+import { listAccounts, onAccounts, type GhAccount } from "./github/accounts";
 import { fetchAll, parseAnyRepo, type RepoResult } from "./providers";
 import type { Classified } from "./github/types";
 import { classify } from "./state/classify";
@@ -88,6 +88,7 @@ export default function App() {
   const runId = useRef(0);
   const [repoFilter, setRepoFilter] = useState("");
   const [updated, setUpdated] = useState<Date | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<{ at: number; failed: boolean } | null>(null);
   const [accounts, setAccounts] = useState<GhAccount[]>([]);
   const [newVersion, setNewVersion] = useState<Update | null>(null);
   const [installing, setInstalling] = useState(false);
@@ -102,8 +103,11 @@ export default function App() {
 
   useEffect(() => {
     loadConfig().then(setConfig);
-    listAccounts().then(setAccounts).catch(() => setAccounts([]));
+    // Later sign-in checks re-run `gh auth status`; each one keeps the picker current.
+    const off = onAccounts(setAccounts);
+    listAccounts().catch(() => setAccounts([]));
     checkForUpdate().then(setNewVersion);
+    return off;
   }, []);
 
   const refresh = useCallback(async (repos: string[], account: string | null) => {
@@ -117,8 +121,11 @@ export default function App() {
       setResults((prev) => ({ ...prev, [r.repo]: r }));
       setPending((prev) => prev.filter((k) => k !== r.repo));
     };
-    await fetchAll(repos, account, onResult);
-    if (run === runId.current) setUpdated(new Date());
+    const all = await fetchAll(repos, account, onResult);
+    if (run === runId.current) {
+      setUpdated(new Date());
+      setLastRefresh({ at: Date.now(), failed: all.some((r) => r.error) });
+    }
   }, []);
 
   const items = useMemo(
@@ -273,7 +280,14 @@ export default function App() {
               <path d="M21 3v6h-6" />
             </svg>
           </button>
-          <Settings config={config} accounts={accounts} onChange={update} onAddRepo={addRepo} />
+          <Settings
+            config={config}
+            accounts={accounts}
+            onChange={update}
+            onAddRepo={addRepo}
+            onSignedIn={() => lastRefresh?.failed && refresh(config.repos, config.account)}
+            lastRefresh={lastRefresh}
+          />
         </div>
       </header>
 

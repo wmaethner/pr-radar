@@ -144,20 +144,48 @@ fn az_rest(url: String) -> Result<String, String> {
     }
 }
 
-/// Raw JSON from `gh auth status --json hosts`. `gh` exits non-zero when any
-/// account has problems but still prints the JSON, so stdout is used regardless.
-#[tauri::command]
-fn gh_accounts() -> Result<String, String> {
-    let out = command(gh_path())
-        .args(["auth", "status", "--json", "hosts"])
-        .output()
-        .map_err(|e| format!("could not run gh: {e}"))?;
-    let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    if stdout.is_empty() {
-        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
-    } else {
-        Ok(stdout)
+/// `gh auth status --json hosts`, which validates every stored token against the API. With
+/// `--json` gh exits 0 even for a bad token, so the per-account `state` and `error` fields are the
+/// real signal. One command feeds both the account picker and the sign-in panel. A spawn error is
+/// the only reliable "not installed" signal, since `bin_path` falls back to a bare name.
+#[tauri::command(async)]
+fn gh_auth_status() -> String {
+    match command(gh_path()).args(["auth", "status", "--json", "hosts"]).output() {
+        Ok(out) => serde_json::json!({
+            "found": true,
+            "hosts": String::from_utf8_lossy(&out.stdout).trim(),
+            "detail": String::from_utf8_lossy(&out.stderr).trim(),
+        }),
+        Err(e) => serde_json::json!({ "found": false, "hosts": "", "detail": e.to_string() }),
     }
+    .to_string()
+}
+
+/// Can `az` get an Azure DevOps token? Unlike `az account show`, which only reads the local
+/// profile, this goes through the same token path `az_rest` uses, so an expired or revoked login
+/// fails here too. `--query` keeps the token itself out of the output. The user name comes from
+/// `az account show`, only once the token check has passed.
+#[tauri::command(async)]
+fn az_health() -> String {
+    let result = |found: bool, ok: bool, user: &str, detail: &str| {
+        serde_json::json!({ "found": found, "ok": ok, "user": user, "detail": detail }).to_string()
+    };
+    let token = match az_command()
+        .args(["account", "get-access-token", "--resource", ADO_RESOURCE, "--query", "expiresOn", "--output", "tsv"])
+        .output()
+    {
+        Ok(out) => out,
+        Err(e) => return result(false, false, "", &e.to_string()),
+    };
+    if !token.status.success() {
+        return result(true, false, "", String::from_utf8_lossy(&token.stderr).trim());
+    }
+    let user = az_command()
+        .args(["account", "show", "--query", "user.name", "--output", "tsv"])
+        .output()
+        .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
+        .unwrap_or_default();
+    result(true, true, &user, "")
 }
 
 /// Debug builds (`tauri dev`) use their own file so development never touches the installed app's settings.
@@ -184,6 +212,18 @@ fn save_config(app: tauri::AppHandle, json: String) -> Result<(), String> {
     fs::write(config_file(&app)?, json).map_err(|e| e.to_string())
 }
 
+/// Where the config lives, so the UI can offer to show it in the file manager. Falls back to
+/// the directory before anything has been saved, since you can't reveal a file that isn't there.
+#[tauri::command]
+fn config_path(app: tauri::AppHandle) -> Result<String, String> {
+    let file = config_file(&app)?;
+    if file.exists() {
+        return Ok(file.to_string_lossy().into_owned());
+    }
+    let dir = file.parent().map(PathBuf::from).unwrap_or_else(|| file.clone());
+    Ok(dir.to_string_lossy().into_owned())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -194,7 +234,15 @@ pub fn run() {
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![gh_graphql, gh_accounts, az_rest, load_config, save_config])
+        .invoke_handler(tauri::generate_handler![
+            gh_graphql,
+            gh_auth_status,
+            az_rest,
+            az_health,
+            load_config,
+            save_config,
+            config_path
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

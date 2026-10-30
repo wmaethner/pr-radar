@@ -112,6 +112,10 @@ header h1 { font-size: 16px; font-weight: 700; margin: 0; white-space: nowrap; l
 .popover .field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .popover .field > span { color: var(--muted); }
 .popover .section-title { font-weight: 600; margin: 14px 0 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+/* A section title with a control on the right, e.g. "Sign-in  Recheck". */
+.popover .section-title.with-action { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+/* The sign-in section leads the popover, so it needs no separator above it. */
+.popover .section-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
 .add-repo { display: flex; gap: 6px; }
 .add-repo input { flex: 1; min-width: 0; }
 .popover .error { margin: 6px 0 0; font-size: 12px; }
@@ -120,6 +124,30 @@ header h1 { font-size: 16px; font-weight: 700; margin: 0; white-space: nowrap; l
 .repo-list li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .repo-list .icon-btn { min-width: 24px; height: 24px; font-size: 12px; }
 .version { font-size: 12px; margin-top: 12px; }
+
+/* Sign-in health: one row per code host, with the CLI's own reason and the command that fixes it */
+.link-btn { border: none; background: none; padding: 0; font-size: 12px; font-weight: 500; color: var(--muted); text-decoration: underline; }
+.link-btn:hover:not(:disabled) { color: inherit; }
+.link-btn:disabled { cursor: default; }
+.config-btn { margin-top: 12px; }
+.health-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.health-head { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.health-row .dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; }
+.health-row.ok .dot { background: var(--ok); }
+.health-row.bad .dot { background: var(--danger); }
+.health-row.unverified .dot { background: var(--muted); }
+.health-host { font-weight: 500; flex-shrink: 0; }
+.health-summary { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.health-row.bad .health-summary { color: var(--danger); }
+.health-detail { margin: 4px 0 0 15px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
+.health-fix { display: flex; align-items: center; gap: 6px; margin: 6px 0 0 15px; font-size: 12px; color: var(--muted); }
+.health-fix code { flex: 1; min-width: 0; overflow-x: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; color: inherit; white-space: nowrap; }
+.health-fix .icon-btn { min-width: 24px; height: 24px; font-size: 12px; }
+.icon-btn.has-problem { position: relative; color: var(--danger); }
+.icon-btn.has-problem::after {
+  content: ""; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--danger); border: 1.5px solid var(--card);
+}
 
 /* Panels: each area of the app is its own window with a title bar and a body */
 .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); overflow: hidden; }

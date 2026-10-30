@@ -7,7 +7,7 @@ For the module map, classification rules and known gaps, see [CLAUDE.md](../CLAU
 The app is a Tauri v2 desktop app: two halves in one process tree.
 
 - **Frontend**: React and TypeScript, bundled by Vite into static files (`dist/`). It runs in the OS's native webview (WKWebView on macOS, WebView2 on Windows, WebKitGTK on Linux), not a bundled Chromium.
-- **Backend**: a small Rust program (`src-tauri/src/lib.rs`) that owns the window and exposes commands the frontend calls with `invoke`: `gh_graphql`, `gh_accounts`, `az_rest`, `load_config`, `save_config`. It contains no GitHub or ADO logic. It spawns the `gh` and `az` CLIs and returns their output.
+- **Backend**: a small Rust program (`src-tauri/src/lib.rs`) that owns the window and exposes commands the frontend calls with `invoke`: `gh_graphql`, `gh_auth_status`, `az_rest`, `az_health`, `load_config`, `save_config`, `config_path`. It contains no GitHub or ADO logic. It spawns the `gh` and `az` CLIs and returns their output.
 
 All product logic (fetching, classifying, polling, rendering) is TypeScript. `npm run tauri dev` serves the frontend from Vite on port 1420 with hot reload and compiles the Rust side.
 

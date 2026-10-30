@@ -8,6 +8,7 @@
     "core:window:allow-set-badge-count",
     "core:window:allow-set-overlay-icon",
     "opener:default",
+    "opener:allow-reveal-item-in-dir",
     "updater:default",
     "process:allow-restart"
   ]
