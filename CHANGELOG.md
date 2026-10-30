@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/wmaethner/pr-radar/compare/v0.3.0...v0.4.0) (2026-10-30)
+
+
+### Features
+
+* add a sign-in panel to settings ([#30](https://github.com/wmaethner/pr-radar/issues/30)) ([4c779dd](https://github.com/wmaethner/pr-radar/commit/4c779dd9f9bb5f42579c9fe5898a151c783a2955))
+
+
+### Bug Fixes
+
+* don't flag top-level comments from bots as needing action ([#33](https://github.com/wmaethner/pr-radar/issues/33)) ([9ed108f](https://github.com/wmaethner/pr-radar/commit/9ed108f8535958f61784fd889cdaa7f775affa13))
+* run gh commands off the main thread so refresh doesn't freeze the UI ([#31](https://github.com/wmaethner/pr-radar/issues/31)) ([0ea1b98](https://github.com/wmaethner/pr-radar/commit/0ea1b98cb1d0734a59fdd7080d12f3f79b3c1dc9))
+
 ## [0.3.0](https://github.com/wmaethner/pr-radar/compare/v0.2.0...v0.3.0) (2026-10-27)
 
 
