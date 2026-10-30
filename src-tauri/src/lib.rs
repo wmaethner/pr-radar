@@ -95,7 +95,7 @@ fn token_for(user: &str) -> Result<String, String> {
 /// Run a GraphQL request through the `gh` CLI, reusing its login. `body` is the
 /// JSON `{ "query": ..., "variables": ... }`. When `account` is set, the request
 /// is made as that account instead of the active one. Returns the raw JSON response.
-#[tauri::command]
+#[tauri::command(async)]
 fn gh_graphql(body: String, account: Option<String>) -> Result<String, String> {
     let mut cmd = command(gh_path());
     cmd.args(["api", "graphql", "--input", "-"])
