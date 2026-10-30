@@ -1,6 +1,7 @@
 export interface Actor {
   login: string; // identity used for matching against the viewer
   name?: string; // display name, when login is not human-readable
+  isBot?: boolean; // GitHub App / bot account (e.g. Copilot), whose comments are informational
 }
 
 export interface TimedComment {
