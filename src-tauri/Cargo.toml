@@ -3,6 +3,7 @@ name = "pr-radar"
 version = "0.4.0"
 description = "Desktop app that shows which GitHub and Azure DevOps PRs need your attention"
 authors = ["Will Maethner"]
+license = "MIT"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

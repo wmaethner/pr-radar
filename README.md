@@ -85,3 +85,7 @@ PR Radar can also track Azure DevOps repos. Install the [Azure CLI](https://lear
 ## Project layout
 
 See [CLAUDE.md](./CLAUDE.md) for the module map, design decisions and known gaps, and [docs/architecture.md](./docs/architecture.md) for how the app runs, how to build a release, and what is macOS-specific.
+
+## License
+
+[MIT](./LICENSE)
