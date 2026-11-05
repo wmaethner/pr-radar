@@ -2,6 +2,8 @@ import { getVersion } from "@tauri-apps/api/app";
 import { useEffect, useRef, useState } from "react";
 import { HealthPanel, isProblem, useHealth } from "./Health";
 import type { GhAccount } from "./github/accounts";
+import { repoListers } from "./providers";
+import { RepoPicker } from "./RepoPicker";
 import type { Config } from "./store/config";
 import { labelOf } from "./ui";
 
@@ -25,6 +27,7 @@ export function Settings({
   accounts,
   onChange,
   onAddRepo,
+  onAddRepos,
   onSignedIn,
   lastRefresh,
 }: {
@@ -33,6 +36,8 @@ export function Settings({
   onChange: (next: Config) => void;
   /** Returns an error message, or null when the repo was added. */
   onAddRepo: (input: string) => Promise<string | null>;
+  /** Adds several repo keys at once (from the picker), skipping ones already added. */
+  onAddRepos: (keys: string[]) => Promise<void>;
   /** A check just went from a problem to all green: refresh so the repos' errors clear too. */
   onSignedIn: () => void;
   /** When the last full refresh finished, and whether any repo failed in it. */
@@ -42,6 +47,7 @@ export function Settings({
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState("");
+  const [browsing, setBrowsing] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const { health, checking, checkedAt, checkedFor, recheck } = useHealth(config.repos, config.account);
   const problem = health?.some(isProblem) ?? false;
@@ -88,14 +94,15 @@ export function Settings({
     const onDown = (e: MouseEvent) => {
       if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    // The picker handles its own Escape; closing the popover under it too would lose it with it.
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !browsing && setOpen(false);
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, browsing]);
 
   const submit = async () => {
     const err = await onAddRepo(input);
@@ -162,6 +169,19 @@ export function Settings({
             <button type="submit">Add</button>
           </form>
           {error && <p className="error">{error}</p>}
+          {repoListers().length > 0 && (
+            <button className="link-btn browse-btn" onClick={() => setBrowsing(true)}>
+              Browse your repos…
+            </button>
+          )}
+          {browsing && (
+            <RepoPicker
+              account={config.account}
+              added={config.repos}
+              onAdd={onAddRepos}
+              onClose={() => setBrowsing(false)}
+            />
+          )}
           <ul className="repo-list">
             {config.repos.map((r) => (
               <li key={r}>

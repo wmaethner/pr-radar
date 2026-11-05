@@ -17,6 +17,9 @@ export function healthProviders(repos: string[]): Provider[] {
   return providers.filter((p) => p.health && (p.alwaysCheckHealth || repos.some((r) => p.owns(r))));
 }
 
+/** Providers that can list a signed-in account's repos, for the "browse repos" picker. */
+export const repoListers = (): Provider[] => providers.filter((p) => p.listRepos);
+
 /** Accepts anything a provider recognises; returns the repo key or null. */
 export function parseAnyRepo(input: string): string | null {
   for (const p of providers) {

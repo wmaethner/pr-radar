@@ -7,6 +7,7 @@ import { classify } from "./state/classify";
 import { setActionBadge } from "./badge";
 import { checkForUpdate, installUpdate } from "./update";
 import type { Update } from "@tauri-apps/plugin-updater";
+import { newKeys } from "./state/repoPicker";
 import { isSnoozed, pruneSnoozed, snoozeUntil, timeLeft } from "./state/snooze";
 import { loadConfig, saveConfig, type Config, type Tab, type View } from "./store/config";
 import { Backlog } from "./Backlog";
@@ -180,6 +181,13 @@ export default function App() {
     return null;
   };
 
+  // One update for the whole batch: adding them one by one would save the config once per repo.
+  const addRepos = async (keys: string[]) => {
+    if (!config) return;
+    const fresh = newKeys(config.repos, keys);
+    if (fresh.length) await update({ ...config, repos: [...config.repos, ...fresh] });
+  };
+
   const visible = useMemo(
     () => items.filter((i) => !repoFilter || i.pr.repo === repoFilter),
     [items, repoFilter],
@@ -285,6 +293,7 @@ export default function App() {
             accounts={accounts}
             onChange={update}
             onAddRepo={addRepo}
+            onAddRepos={addRepos}
             onSignedIn={() => lastRefresh?.failed && refresh(config.repos, config.account)}
             lastRefresh={lastRefresh}
           />

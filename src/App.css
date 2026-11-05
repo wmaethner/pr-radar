@@ -125,6 +125,38 @@ header h1 { font-size: 16px; font-weight: 700; margin: 0; white-space: nowrap; l
 .repo-list .icon-btn { min-width: 24px; height: 24px; font-size: 12px; }
 .version { font-size: 12px; margin-top: 12px; }
 
+/* Repo picker: an overlay over the whole window, opened from the settings popover */
+.browse-btn { display: block; margin-top: 8px; }
+.overlay { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.4); }
+.picker {
+  display: flex; flex-direction: column; gap: 10px; width: 520px; max-width: 100%; max-height: 100%;
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+.picker-head { display: flex; align-items: center; justify-content: space-between; }
+.picker-filters { display: flex; gap: 8px; }
+.picker-filters input { flex: 1; min-width: 0; }
+.picker-filters select { max-width: 170px; text-overflow: ellipsis; }
+.picker-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.picker .error { margin: 0; font-size: 12px; }
+.picker-list { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 120px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+.picker-list > li { border-bottom: 1px solid var(--border); }
+.picker-list > li:last-child { border-bottom: none; }
+.picker-list > li.muted { padding: 10px; }
+.pick-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; cursor: pointer; }
+.pick-row:hover { background: var(--border); }
+.pick-row.added { cursor: default; opacity: 0.55; }
+.pick-row.added:hover { background: none; }
+.pick-row input { margin-top: 3px; }
+.pick-text { display: flex; flex-direction: column; min-width: 0; }
+.pick-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.pick-desc { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 6px; }
+.picker-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; }
+.picker-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.picker-actions .primary { background: #0a84ff; border-color: #0a84ff; color: #fff; }
+.picker-actions .primary:disabled { opacity: 0.5; cursor: default; }
+
 /* Sign-in health: one row per code host, with the CLI's own reason and the command that fixes it */
 .link-btn { border: none; background: none; padding: 0; font-size: 12px; font-weight: 500; color: var(--muted); text-decoration: underline; }
 .link-btn:hover:not(:disabled) { color: inherit; }
