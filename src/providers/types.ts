@@ -33,6 +33,29 @@ export interface Health {
   unverified?: boolean;
 }
 
+/** A repo the signed-in account can access, offered in the "browse repos" picker. */
+export interface RepoChoice {
+  /** The key to store in `Config.repos`. */
+  key: string;
+  description: string | null;
+  isPrivate: boolean;
+  isFork: boolean;
+  isArchived: boolean;
+  /** ISO time of the last push, for sorting; null when the repo is empty. */
+  pushedAt: string | null;
+}
+
+/** One page of `RepoChoice`s. */
+export interface RepoPage {
+  choices: RepoChoice[];
+  /** Pass to the next `listRepos` call; null on the last page. */
+  next: string | null;
+  /** How many repos the account can access in all, as far as the host says. */
+  total: number;
+  /** The host answered but couldn't show everything, e.g. an org that hasn't authorised the token (SSO). */
+  warning?: string;
+}
+
 /** A code host. Repos are stored in `Config.repos` as opaque keys that exactly one provider owns. */
 export interface Provider {
   id: string;
@@ -45,6 +68,8 @@ export interface Provider {
   display(key: string): { owner: string; name: string };
   /** Fetch one repo's open PRs. May throw: `fetchAll` turns that into `RepoResult.error`. */
   fetchRepo(key: string, ctx: FetchContext): Promise<{ me: string; prs: PullRequest[]; issues?: Issue[] }>;
+  /** List the repos this account can access, a page at a time, newest push first. Optional: hosts without it only take typed repos. */
+  listRepos?(ctx: { account: string | null }, cursor: string | null): Promise<RepoPage>;
   /** CLI and sign-in state for this host. `account` is the gh login in use; other hosts ignore it. */
   health?(account: string | null): Promise<Health>;
   /** Check health even with no repo on this host yet, e.g. the primary host on first run. */

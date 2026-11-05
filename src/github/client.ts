@@ -30,12 +30,22 @@ query($owner: String!, $name: String!) {
   }
 }`;
 
-async function gql<T>(variables: Record<string, string>, account: string | null): Promise<T> {
+/** Run a GraphQL query as `account` and return the whole response, errors included. */
+export async function gqlRaw<T>(
+  query: string,
+  variables: Record<string, string | null>,
+  account: string | null,
+): Promise<{ data: T | null; errors?: { message: string }[] }> {
   const raw = await invoke<string>("gh_graphql", {
-    body: JSON.stringify({ query: REPO_QUERY, variables }),
+    body: JSON.stringify({ query, variables }),
     account,
   });
-  const json = JSON.parse(raw);
+  return JSON.parse(raw);
+}
+
+/** Like `gqlRaw`, but any error in the response is a failure. */
+async function gql<T>(query: string, variables: Record<string, string>, account: string | null): Promise<T> {
+  const json = await gqlRaw<T>(query, variables, account);
   if (json.errors?.length) throw new Error(json.errors[0].message);
   return json.data as T;
 }
@@ -92,7 +102,7 @@ export async function fetchRepo(
     viewer: { login: string };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     repository: { pullRequests: { nodes: any[] }; issues: { nodes: any[] } } | null;
-  }>({ owner, name }, account);
+  }>(REPO_QUERY, { owner, name }, account);
   if (!data.repository) throw new Error("Repo not found or no access");
   return {
     me: data.viewer.login,
