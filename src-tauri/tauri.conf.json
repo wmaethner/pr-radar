@@ -31,7 +31,12 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "createUpdaterArtifacts": true
+    "createUpdaterArtifacts": true,
+    "publisher": "Will Maethner",
+    "copyright": "Copyright (c) 2026 Will Maethner",
+    "shortDescription": "Shows which GitHub and Azure DevOps PRs need your attention",
+    "longDescription": "PR Radar is a desktop app that sorts the open pull requests you authored or are reviewing into what needs your action, what is ready to merge and what is waiting on others. It reads from your GitHub and Azure DevOps repos using your existing gh and az CLI sign-ins.",
+    "homepage": "https://github.com/wmaethner/pr-radar"
   },
   "plugins": {
     "updater": {
