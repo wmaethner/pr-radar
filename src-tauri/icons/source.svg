@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e2a3a"/><stop offset="1" stop-color="#0f1722"/></linearGradient>
+    <linearGradient id="sw" gradientUnits="userSpaceOnUse" x1="348" y1="169" x2="156" y2="380"><stop offset="0" stop-color="#34d399" stop-opacity="0"/><stop offset="1" stop-color="#34d399" stop-opacity="0.6"/></linearGradient>
+  </defs>
+  <rect x="62" y="62" width="900" height="900" rx="200" fill="url(#bg)"/>
+  <path d="M512 512 L348 169 A380 380 0 0 0 156 380 Z" fill="url(#sw)"/>
+  <g fill="none" stroke="#34d399">
+    <circle cx="512" cy="512" r="380" stroke-width="22"/>
+    <circle cx="512" cy="512" r="282" stroke-width="10" opacity="0.4"/>
+    <circle cx="512" cy="512" r="180" stroke-width="10" opacity="0.4"/>
+  </g>
+  <line x1="512" y1="512" x2="156" y2="380" stroke="#34d399" stroke-width="14" stroke-linecap="round"/>
+  <g fill="none" stroke="#fff" stroke-width="42" stroke-linecap="round">
+    <path d="M512 298 V718"/>
+    <path d="M712 418 C712 500 690 565 620 572 C570 577 512 580 512 640"/>
+  </g>
+  <circle cx="512" cy="298" r="64" fill="#fff"/>
+  <circle cx="512" cy="718" r="64" fill="#fff"/>
+  <circle cx="712" cy="418" r="60" fill="#fbbf24"/>
+</svg>
