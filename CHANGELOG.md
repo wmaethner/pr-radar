@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/wmaethner/pr-radar/compare/v0.4.0...v0.5.0) (2026-11-06)
+
+
+### Features
+
+* add a custom app icon ([#37](https://github.com/wmaethner/pr-radar/issues/37)) ([8008301](https://github.com/wmaethner/pr-radar/commit/8008301734340aa1449b39c1f5e07859cc449420))
+* pick repos from the signed-in account's list ([#40](https://github.com/wmaethner/pr-radar/issues/40)) ([f2385c3](https://github.com/wmaethner/pr-radar/commit/f2385c3a812d6a1c5d27f7dbcd6d224b5f43eaf2))
+
+
+### Bug Fixes
+
+* add publisher and description metadata to Windows builds ([#36](https://github.com/wmaethner/pr-radar/issues/36)) ([6a61288](https://github.com/wmaethner/pr-radar/commit/6a612883b6eec17e9cecf8cf23cf6da19c9ceb29))
+
 ## [0.4.0](https://github.com/wmaethner/pr-radar/compare/v0.3.0...v0.4.0) (2026-10-30)
 
 
