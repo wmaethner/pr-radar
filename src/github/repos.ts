@@ -3,6 +3,8 @@ import { gqlRaw } from "./client";
 
 const PAGE_SIZE = 100;
 
+// `ownerAffiliations` defaults to [OWNER, COLLABORATOR], which on its own hides every org repo even
+// when `affiliations` asks for ORGANIZATION_MEMBER, so both must be set.
 const VIEWER_REPOS_QUERY = `
 query($after: String) {
   viewer {
@@ -10,6 +12,7 @@ query($after: String) {
       first: ${PAGE_SIZE}, after: $after
       orderBy: {field: PUSHED_AT, direction: DESC}
       affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]
+      ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]
     ) {
       totalCount
       pageInfo { hasNextPage endCursor }
