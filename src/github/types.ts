@@ -1,3 +1,6 @@
+/** The overall review verdict GitHub reports for a PR; null when no review is required. */
+export type ReviewDecision = "APPROVED" | "CHANGES_REQUESTED" | "REVIEW_REQUIRED" | null;
+
 export interface Actor {
   login: string; // identity used for matching against the viewer
   name?: string; // display name, when login is not human-readable
@@ -20,6 +23,24 @@ export interface Review {
   submittedAt: string | null;
 }
 
+/** One PR in a stack, as the host reports it. `position` 1 is the one closest to the base branch. */
+export interface StackMember {
+  number: number;
+  title: string;
+  url: string;
+  position: number;
+  state: "OPEN" | "CLOSED" | "MERGED";
+  isDraft: boolean;
+  reviewDecision: ReviewDecision;
+}
+
+/** The stack a PR belongs to. `members` may be fewer than `size` if the host returned only part of it. */
+export interface StackInfo {
+  position: number;
+  size: number;
+  members: StackMember[];
+}
+
 export interface PullRequest {
   repo: string; // owner/name, or "ado:org/project/repo"
   number: number;
@@ -28,13 +49,14 @@ export interface PullRequest {
   isDraft: boolean;
   author: Actor | null;
   updatedAt: string;
-  reviewDecision: "APPROVED" | "CHANGES_REQUESTED" | "REVIEW_REQUIRED" | null;
+  reviewDecision: ReviewDecision;
   lastCommitAt: string | null;
   ciState: "SUCCESS" | "FAILURE" | "ERROR" | "PENDING" | "EXPECTED" | null;
   requestedReviewers: string[];
   reviews: Review[];
   threads: ReviewThread[];
   comments: TimedComment[];
+  stack?: StackInfo; // only for PRs in a stack
 }
 
 export interface Issue {

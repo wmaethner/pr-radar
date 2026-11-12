@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Issue, PullRequest } from "./types";
+import type { Issue, PullRequest, StackInfo, StackMember } from "./types";
 
 const REPO_QUERY = `
 query($owner: String!, $name: String!) {
@@ -16,6 +16,13 @@ query($owner: String!, $name: String!) {
           nodes { isResolved comments(first: 30) { nodes { author { login } createdAt } } }
         }
         comments(last: 30) { nodes { author { login __typename } createdAt } }
+        stackEntry {
+          position
+          stack {
+            size
+            entries(first: 30) { nodes { position pullRequest { number title url state isDraft reviewDecision } } }
+          }
+        }
       }
     }
     issues(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
@@ -50,6 +57,20 @@ async function gql<T>(query: string, variables: Record<string, string>, account:
   return json.data as T;
 }
 
+/** The stack a PR is in, or undefined when it isn't in one. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function toStack(entry: any): StackInfo | undefined {
+  const stack = entry?.stack;
+  if (!stack) return undefined;
+  const members: StackMember[] = (stack.entries?.nodes ?? [])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .filter((e: any) => e?.pullRequest)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((e: any) => ({ ...e.pullRequest, position: e.position }))
+    .sort((a: StackMember, b: StackMember) => a.position - b.position);
+  return { position: entry.position, size: stack.size, members };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toPr(repo: string, n: any): PullRequest {
   const commit = n.commits.nodes[0]?.commit;
@@ -73,6 +94,7 @@ function toPr(repo: string, n: any): PullRequest {
       author: c.author && { login: c.author.login, isBot: c.author.__typename === "Bot" },
       createdAt: c.createdAt,
     })),
+    stack: toStack(n.stackEntry),
   };
 }
 
