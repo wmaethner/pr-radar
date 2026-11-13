@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/wmaethner/pr-radar/compare/v0.5.0...v0.6.0) (2026-11-13)
+
+
+### Features
+
+* show stack status on PRs ([#45](https://github.com/wmaethner/pr-radar/issues/45)) ([cc7a4cc](https://github.com/wmaethner/pr-radar/commit/cc7a4cc5d9d14572279065ce24251a563d27c53f))
+
+
+### Bug Fixes
+
+* show org repos in the repo picker ([#41](https://github.com/wmaethner/pr-radar/issues/41)) ([3f4d327](https://github.com/wmaethner/pr-radar/commit/3f4d32787c8c2ee48a0c98acb53a20bec9c0d855))
+
 ## [0.5.0](https://github.com/wmaethner/pr-radar/compare/v0.4.0...v0.5.0) (2026-11-06)
 
 
