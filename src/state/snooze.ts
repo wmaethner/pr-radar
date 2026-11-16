@@ -1,3 +1,5 @@
+import type { Classified } from "../github/types";
+import type { Tab } from "../store/config";
 /** Snoozed PRs: PR url -> ISO time the snooze ends. */
 export type Snoozed = Record<string, string>;
 
@@ -20,3 +22,7 @@ export function timeLeft(until: string, now: Date): string {
   const mins = Math.max(1, Math.ceil((new Date(until).getTime() - now.getTime()) / 60000));
   return mins < 60 ? `${mins}m` : `${Math.ceil(mins / 60)}h`;
 }
+
+/** The tab a classified PR shows under: only `action` PRs can be snoozed, and a lapsed snooze no longer counts. */
+export const tabOf = (item: Classified, snoozed: Snoozed, now: Date): Tab =>
+  item.bucket === "action" && isSnoozed(snoozed, item.pr.url, now) ? "snoozed" : item.bucket;

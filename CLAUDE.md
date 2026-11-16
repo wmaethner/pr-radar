@@ -34,13 +34,18 @@ src/state/classify.ts  Pure logic: classify(pr, me) -> Classified | null
 src/state/stack.ts     Pure stack logic: stackStatus(pr) / stackChip() annotate a PR that is part of a stack (separate from classify)
 src/state/repoPicker.ts Pure picker logic: filter/owner counts/merge pages/new keys
 src/state/backlog.ts   Pure backlog logic: PRs needing a reviewer, issue assignment (separate from classify)
-src/state/snooze.ts    Pure snooze helpers (expiry, pruning, time left)
+src/state/snooze.ts    Pure snooze helpers (expiry, pruning, time left, tabOf)
 src/store/config.ts    Config (repos, pollMinutes, tab, snoozed, collapsed, account) load/save
 src/Backlog.tsx        Backlog view: PRs needing review (with assigned reviewers) and open issues, grouped by repo
 src/Settings.tsx       Gear popover in the header: account, refresh interval, add/remove repos, version
 src/RepoPicker.tsx     "Browse your repos" overlay: search the account's repos and add several at once
 src/ui.tsx             Small shared UI helpers (ago, RepoName, labelOf)
-src/App.tsx            UI, polling, repo filter, status tabs with per-repo collapsible groups, repo management
+src/App.tsx            Shell: header, repo filter, view switch, repo management, badge
+src/useRepoData.ts     Hook: polling, per-repo results as they land, classify, errors, last refresh
+src/useCollapse.tsx    Hook: collapsible section helpers persisted in Config.collapsed
+src/MyPrs.tsx          "My PRs" view: status tabs, per-repo groups, snooze actions
+src/PrRow.tsx          One PR row with its stack chip and optional row action
+src/UpdateBanner.tsx   Checks for a new release and offers to install it
 ```
 
 Data flow: `App` polls -> `fetchAll` (`src/providers`) looks up each repo key's `Provider` and runs `provider.fetchRepo` for all repos in parallel (GitHub: one GraphQL query; ADO: `az` REST calls), turning a throw into `RepoResult.error` and calling `onResult` as each repo finishes so `App` shows that repo's PRs immediately while the others load (header shows progress and the repos still pending) -> `classify` each PR for that repo's `RepoResult.me` -> render grouped by bucket, newest-updated first.
