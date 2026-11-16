@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import type { Classified } from "./github/types";
+import type { Classified } from "../github/types";
 import type { Collapse } from "./Backlog";
-import { PrRow, type RowAction } from "./PrRow";
-import { groupByRepo } from "./state/group";
-import { snoozeUntil, tabOf, timeLeft } from "./state/snooze";
-import type { Config, Tab } from "./store/config";
-import { RepoName } from "./ui";
+import { PrRow, type RowAction } from "../components/PrRow";
+import { groupByRepo } from "../state/group";
+import { snoozeUntil, tabOf, timeLeft } from "../state/snooze";
+import type { Config, Tab } from "../store/config";
+import { RepoName } from "../components/ui";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "action", label: "Needs action" },

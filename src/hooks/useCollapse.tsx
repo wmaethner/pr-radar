@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from "react";
-import type { Collapse } from "./Backlog";
-import type { Config } from "./store/config";
+import type { Collapse } from "../views/Backlog";
+import type { Config } from "../store/config";
 
 /** Collapsible section helpers, persisted in the config's `collapsed` list. */
 export function useCollapse(config: Config | null, update: (next: Config) => Promise<void>): Collapse {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import type { Classified } from "./github/types";
-import { stackChip, stackStatus } from "./state/stack";
+import type { Classified } from "../github/types";
+import { stackChip, stackStatus } from "../state/stack";
 import { RepoName, ago } from "./ui";
 
 export interface RowAction {

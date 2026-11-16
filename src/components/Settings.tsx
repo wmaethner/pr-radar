@@ -1,10 +1,10 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { useEffect, useRef, useState } from "react";
 import { HealthPanel, isProblem, useHealth } from "./Health";
-import type { GhAccount } from "./github/accounts";
-import { repoListers } from "./providers";
+import type { GhAccount } from "../github/accounts";
+import { repoListers } from "../providers";
 import { RepoPicker } from "./RepoPicker";
-import type { Config } from "./store/config";
+import type { Config } from "../store/config";
 import { labelOf } from "./ui";
 
 const POLL_CHOICES = [1, 2, 5, 10, 15, 30];

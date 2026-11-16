@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { setActionBadge } from "./badge";
+import { setActionBadge } from "./platform/badge";
 import { tabOf } from "./state/snooze";
-import { Backlog } from "./Backlog";
-import { Header } from "./Header";
-import { MyPrs } from "./MyPrs";
-import { UpdateBanner } from "./UpdateBanner";
-import { useCollapse } from "./useCollapse";
-import { useConfig } from "./useConfig";
-import { useRepoData } from "./useRepoData";
-import { labelOf } from "./ui";
+import { Backlog } from "./views/Backlog";
+import { Header } from "./components/Header";
+import { MyPrs } from "./views/MyPrs";
+import { UpdateBanner } from "./components/UpdateBanner";
+import { useCollapse } from "./hooks/useCollapse";
+import { useConfig } from "./hooks/useConfig";
+import { useRepoData } from "./hooks/useRepoData";
+import { labelOf } from "./components/ui";
 import "./App.css";
 
 export default function App() {

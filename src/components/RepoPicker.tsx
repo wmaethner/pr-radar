@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { repoListers } from "./providers";
-import type { RepoChoice } from "./providers/types";
-import { filterChoices, MAX_LOADED, mergeChoices, ownersOf } from "./state/repoPicker";
+import { repoListers } from "../providers";
+import type { RepoChoice } from "../providers/types";
+import { filterChoices, MAX_LOADED, mergeChoices, ownersOf } from "../state/repoPicker";
 import { RepoName } from "./ui";
 
 /**

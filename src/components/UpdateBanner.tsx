@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Update } from "@tauri-apps/plugin-updater";
-import { checkForUpdate, installUpdate } from "./update";
+import { checkForUpdate, installUpdate } from "../platform/update";
 
 /** Checks for a newer release once on mount and offers to install it. Renders nothing when up to date. */
 export function UpdateBanner() {

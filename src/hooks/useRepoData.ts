@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchAll, type RepoResult } from "./providers";
-import type { Classified } from "./github/types";
-import { classify } from "./state/classify";
-import type { Config } from "./store/config";
+import { fetchAll, type RepoResult } from "../providers";
+import type { Classified } from "../github/types";
+import { classify } from "../state/classify";
+import type { Config } from "../store/config";
 
 export interface RefreshStatus {
   at: number;

@@ -1,4 +1,4 @@
-import { repoDisplay } from "./providers";
+import { repoDisplay } from "../providers";
 
 export function ago(iso: string) {
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));

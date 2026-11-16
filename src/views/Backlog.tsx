@@ -1,9 +1,9 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { ReactNode } from "react";
-import type { Issue, PullRequest } from "./github/types";
-import type { RepoResult } from "./providers";
-import { backlogIssues, backlogPrs, type BacklogPr, type IssueAssignment, type Reviewer } from "./state/backlog";
-import { ago, RepoName } from "./ui";
+import type { Issue, PullRequest } from "../github/types";
+import type { RepoResult } from "../providers";
+import { backlogIssues, backlogPrs, type BacklogPr, type IssueAssignment, type Reviewer } from "../state/backlog";
+import { ago, RepoName } from "../components/ui";
 
 /** Collapse helpers owned by App, which persists them in the config. */
 export interface Collapse {

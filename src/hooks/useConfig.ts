@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { parseAnyRepo } from "./providers";
-import { newKeys } from "./state/repoPicker";
-import { pruneSnoozed } from "./state/snooze";
-import { loadConfig, saveConfig, type Config } from "./store/config";
-import { labelOf } from "./ui";
+import { parseAnyRepo } from "../providers";
+import { newKeys } from "../state/repoPicker";
+import { pruneSnoozed } from "../state/snooze";
+import { loadConfig, saveConfig, type Config } from "../store/config";
+import { labelOf } from "../components/ui";
 
 /** Loads the config, saves every change, and owns the edits that add repos or drop expired snoozes. */
 export function useConfig(now: Date) {

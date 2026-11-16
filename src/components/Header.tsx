@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { listAccounts, onAccounts, type GhAccount } from "./github/accounts";
-import type { Config, View } from "./store/config";
-import type { RefreshStatus } from "./useRepoData";
+import { listAccounts, onAccounts, type GhAccount } from "../github/accounts";
+import type { Config, View } from "../store/config";
+import type { RefreshStatus } from "../hooks/useRepoData";
 import { Settings } from "./Settings";
 import { labelOf } from "./ui";
 

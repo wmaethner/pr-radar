@@ -18,37 +18,39 @@ The goal is a single glanceable view of "what do I need to do on PRs right now",
 ## Architecture
 
 ```
-src-tauri/src/lib.rs   Rust commands: gh_graphql, gh_auth_status, az_rest, az_health, load_config, save_config, config_path
-src/github/accounts.ts Lists logged-in gh accounts; ghAuthStatus() shares one gh_auth_status run between the picker and the Sign-in panel, and onAccounts() keeps the picker current
-src/github/health.ts   Pure parseGhHealth(): gh install + per-account token state -> Health
-src/ado/health.ts      Pure parseAzHealth(): az install + login state -> Health
-src/Health.tsx         Sign-in panel in the settings popover; useHealth() runs each provider check
-src/providers/         Provider interface + registry: fetchAll(), parseAnyRepo(), repoDisplay(); one runner for fan-out/errors
-src/github/provider.ts GitHub Provider (key "owner/name"); client.ts has the GraphQL query + fetchRepo()
-src/github/repos.ts    listRepos(): one page of the repos the account can access (viewer.repositories), plus pure parseViewerRepos()
-src/github/types.ts    PullRequest, Classified, Bucket and related types (shared by GitHub and ADO)
-src/ado/repo.ts        ADO repo keys ("ado:org/project/repo"), parseAdoRepo() for URLs
-src/ado/provider.ts    Azure DevOps Provider (key "ado:org/project/repo")
-src/ado/client.ts      Azure DevOps REST via az_rest; maps votes/threads/iterations to PullRequest
-src/state/classify.ts  Pure logic: classify(pr, me) -> Classified | null
-src/state/stack.ts     Pure stack logic: stackStatus(pr) / stackChip() annotate a PR that is part of a stack (separate from classify)
-src/state/repoPicker.ts Pure picker logic: filter/owner counts/merge pages/new keys
-src/state/backlog.ts   Pure backlog logic: PRs needing a reviewer, issue assignment (separate from classify)
-src/state/group.ts    Pure groupByRepo() for the My PRs lists
-src/state/snooze.ts    Pure snooze helpers (expiry, pruning, time left, tabOf)
-src/store/config.ts    Config (repos, pollMinutes, tab, snoozed, collapsed, account) load/save
-src/Backlog.tsx        Backlog view: PRs needing review (with assigned reviewers) and open issues, grouped by repo
-src/Settings.tsx       Gear popover in the header: account, refresh interval, add/remove repos, version
-src/RepoPicker.tsx     "Browse your repos" overlay: search the account's repos and add several at once
-src/ui.tsx             Small shared UI helpers (ago, RepoName, labelOf)
-src/App.tsx            Shell: wires the hooks to Header, UpdateBanner and the two views; sets the badge
-src/Header.tsx         Brand, view switch, repo filter, refresh button, settings popover (owns the account list)
-src/useConfig.ts       Hook: config load/save/update, addRepo(s), expired-snooze pruning
-src/useRepoData.ts     Hook: polling, per-repo results as they land, classify, errors, last refresh
-src/useCollapse.tsx    Hook: collapsible section helpers persisted in Config.collapsed
-src/MyPrs.tsx          "My PRs" view: status tabs, per-repo groups, snooze actions
-src/PrRow.tsx          One PR row with its stack chip and optional row action
-src/UpdateBanner.tsx   Checks for a new release and offers to install it
+src-tauri/src/lib.rs             Rust commands: gh_graphql, gh_auth_status, az_rest, az_health, load_config, save_config, config_path
+src/App.tsx                      Shell: wires the hooks to Header, UpdateBanner and the two views; sets the badge
+src/views/Backlog.tsx            Backlog view: PRs needing review (with assigned reviewers) and open issues, grouped by repo
+src/views/MyPrs.tsx              "My PRs" view: status tabs, per-repo groups, snooze actions
+src/components/Health.tsx        Sign-in panel in the settings popover; useHealth() runs each provider check
+src/components/Settings.tsx      Gear popover in the header: account, refresh interval, add/remove repos, version
+src/components/RepoPicker.tsx    "Browse your repos" overlay: search the account's repos and add several at once
+src/components/ui.tsx            Small shared UI helpers (ago, RepoName, labelOf)
+src/components/Header.tsx        Brand, view switch, repo filter, refresh button, settings popover (owns the account list)
+src/components/PrRow.tsx         One PR row with its stack chip and optional row action
+src/components/UpdateBanner.tsx  Checks for a new release and offers to install it
+src/hooks/useConfig.ts           Hook: config load/save/update, addRepo(s), expired-snooze pruning
+src/hooks/useRepoData.ts         Hook: polling, per-repo results as they land, classify, errors, last refresh
+src/hooks/useCollapse.tsx        Hook: collapsible section helpers persisted in Config.collapsed
+src/platform/badge.ts            Dock badge count (macOS) / drawn taskbar overlay icon (Windows)
+src/platform/update.ts           Release check and install via the Tauri updater
+src/state/classify.ts            Pure logic: classify(pr, me) -> Classified | null
+src/state/stack.ts               Pure stack logic: stackStatus(pr) / stackChip() annotate a PR that is part of a stack (separate from classify)
+src/state/repoPicker.ts          Pure picker logic: filter/owner counts/merge pages/new keys
+src/state/backlog.ts             Pure backlog logic: PRs needing a reviewer, issue assignment (separate from classify)
+src/state/group.ts               Pure groupByRepo() for the My PRs lists
+src/state/snooze.ts              Pure snooze helpers (expiry, pruning, time left, tabOf)
+src/store/config.ts              Config (repos, pollMinutes, tab, snoozed, collapsed, account) load/save
+src/providers/                   Provider interface + registry: fetchAll(), parseAnyRepo(), repoDisplay(); one runner for fan-out/errors
+src/github/accounts.ts           Lists logged-in gh accounts; ghAuthStatus() shares one gh_auth_status run between the picker and the Sign-in panel, and onAccounts() keeps the picker current
+src/github/health.ts             Pure parseGhHealth(): gh install + per-account token state -> Health
+src/github/provider.ts           GitHub Provider (key "owner/name"); client.ts has the GraphQL query + fetchRepo()
+src/github/repos.ts              listRepos(): one page of the repos the account can access (viewer.repositories), plus pure parseViewerRepos()
+src/github/types.ts              PullRequest, Classified, Bucket and related types (shared by GitHub and ADO)
+src/ado/health.ts                Pure parseAzHealth(): az install + login state -> Health
+src/ado/repo.ts                  ADO repo keys ("ado:org/project/repo"), parseAdoRepo() for URLs
+src/ado/provider.ts              Azure DevOps Provider (key "ado:org/project/repo")
+src/ado/client.ts                Azure DevOps REST via az_rest; maps votes/threads/iterations to PullRequest
 ```
 
 Data flow: `App` polls -> `fetchAll` (`src/providers`) looks up each repo key's `Provider` and runs `provider.fetchRepo` for all repos in parallel (GitHub: one GraphQL query; ADO: `az` REST calls), turning a throw into `RepoResult.error` and calling `onResult` as each repo finishes so `App` shows that repo's PRs immediately while the others load (header shows progress and the repos still pending) -> `classify` each PR for that repo's `RepoResult.me` -> render grouped by bucket, newest-updated first.
@@ -68,7 +70,7 @@ To add a code host, implement `Provider` (`src/providers/types.ts`) in its own f
 - **Stacked PRs** (GitHub only): `PullRequest.stack` comes from GitHub's native `stackEntry { position stack { size entries } }`; PRs in a hand-made stack (each base branch is another PR's head) are not detected. `classify` is unaware of stacks, like snooze: `state/stack.ts` only annotates what it decided. A PR keeps its bucket, and a row in a stack gets a chip ("Stack 1/3"), which expands to the other PRs with their review state. On a PR that is in **Ready to merge**, the chip turns amber ("Stack 1/3 · 2 not ready") while any other open member isn't ready, so nobody merges one PR without the rest. Member "ready" means open, not a draft and `reviewDecision === APPROVED`, the same bar as `classify`; CI is not checked for the other members. Merged and closed members are ignored, and a stack with no other open member shows no chip. Never affects the badge. Members the host didn't return (stack > 30) count as not ready.
 - **Snooze**: a display layer over `classify`, which is unaware of it. `Config.snoozed` maps PR url -> end time; only `action` PRs can be snoozed (24h fixed). A snoozed PR shows in the Snoozed tab and is not counted in the badge; when the time passes it is simply classified normally again. A snooze never ends early because of new activity.
 - **Sign-in panel**: the settings popover opens with one row per code host saying whether its CLI is installed and signed in, and the gear grows a red dot when something is wrong - otherwise a dead `gh` token is invisible until you have repos, and then only as a per-repo error string. `Provider.health?(account)` is optional; `healthProviders()` checks GitHub always (first run has no repos, which is exactly when this matters) and other hosts only once a repo on them is configured. The verdict comes from `gh auth status --json hosts`, which validates each token against the API and is the same call the account picker uses (`ghAuthStatus()` shares one run between them): with `--json` gh always exits 0, so the per-account `state` and `error` fields are the real signal. gh reports "couldn't reach GitHub" with the same `state` as a bad token, so an `HTTP 4xx` (GitHub answered and refused it) or no reason counts as a broken token; a timeout, a 5xx or a connection error is `unverified`, shown but without the red dot. The fix for a broken token is `gh auth refresh` only for gh's active account (it has no `--user`), otherwise `gh auth login`. ADO is checked with `az account get-access-token` (its `--query` keeps the token out of the output), since `az account show` only reads the local profile. ADO is `unverified` only when `az` clearly couldn't connect and didn't ask for a login. A token from `GH_TOKEN`/`GITHUB_TOKEN` gets no gh command, since gh can't refresh it. Checks run on startup, when the account or the set of hosts changes, when refreshes start or stop failing (not on every failed poll: a repo can fail for unrelated reasons), and on opening the popover unless the last check was clean and under a minute old; every finished `gh auth status` run also updates the account picker (`onAccounts`). Going from a problem to all green for the same account and hosts refreshes the PRs if the last refresh failed, so the stale repo errors clear. One check runs at a time (`serialRunner`): asking mid-run queues one fresh run, so a stale result never publishes. It judges the account in `Config.account`, not gh's active one, since that is the token the app actually uses. Parsing is pure and tested; the panel also has a "Show config file" button for settings with no UI.
-- **Dock badge**: `App.tsx` sets the badge (via `src/badge.ts`: Dock badge count on macOS, a drawn taskbar overlay icon on Windows) to the number of non-snoozed `action` PRs across all repos (ignores the repo filter). On macOS it needs the `core:window:allow-set-badge-count` permission in `src-tauri/capabilities/default.json`; capability changes need a full app restart, not just hot reload.
+- **Dock badge**: `App.tsx` sets the badge (via `src/platform/badge.ts`: Dock badge count on macOS, a drawn taskbar overlay icon on Windows) to the number of non-snoozed `action` PRs across all repos (ignores the repo filter). On macOS it needs the `core:window:allow-set-badge-count` permission in `src-tauri/capabilities/default.json`; capability changes need a full app restart, not just hot reload.
 - Links open in the system browser via `@tauri-apps/plugin-opener`.
 
 ## Known gaps

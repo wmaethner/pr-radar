@@ -1,8 +1,8 @@
 import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { healthProviders } from "./providers";
-import type { Health, Provider } from "./providers/types";
-import { configPath } from "./store/config";
+import { healthProviders } from "../providers";
+import type { Health, Provider } from "../providers/types";
+import { configPath } from "../store/config";
 
 /** One provider's sign-in state, tagged with which provider it came from. */
 export interface HostHealth extends Health {
