@@ -34,13 +34,16 @@ src/state/classify.ts  Pure logic: classify(pr, me) -> Classified | null
 src/state/stack.ts     Pure stack logic: stackStatus(pr) / stackChip() annotate a PR that is part of a stack (separate from classify)
 src/state/repoPicker.ts Pure picker logic: filter/owner counts/merge pages/new keys
 src/state/backlog.ts   Pure backlog logic: PRs needing a reviewer, issue assignment (separate from classify)
+src/state/group.ts    Pure groupByRepo() for the My PRs lists
 src/state/snooze.ts    Pure snooze helpers (expiry, pruning, time left, tabOf)
 src/store/config.ts    Config (repos, pollMinutes, tab, snoozed, collapsed, account) load/save
 src/Backlog.tsx        Backlog view: PRs needing review (with assigned reviewers) and open issues, grouped by repo
 src/Settings.tsx       Gear popover in the header: account, refresh interval, add/remove repos, version
 src/RepoPicker.tsx     "Browse your repos" overlay: search the account's repos and add several at once
 src/ui.tsx             Small shared UI helpers (ago, RepoName, labelOf)
-src/App.tsx            Shell: header, repo filter, view switch, repo management, badge
+src/App.tsx            Shell: wires the hooks to Header, UpdateBanner and the two views; sets the badge
+src/Header.tsx         Brand, view switch, repo filter, refresh button, settings popover (owns the account list)
+src/useConfig.ts       Hook: config load/save/update, addRepo(s), expired-snooze pruning
 src/useRepoData.ts     Hook: polling, per-repo results as they land, classify, errors, last refresh
 src/useCollapse.tsx    Hook: collapsible section helpers persisted in Config.collapsed
 src/MyPrs.tsx          "My PRs" view: status tabs, per-repo groups, snooze actions

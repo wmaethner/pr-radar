@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { Classified } from "./github/types";
 import type { Collapse } from "./Backlog";
 import { PrRow, type RowAction } from "./PrRow";
+import { groupByRepo } from "./state/group";
 import { snoozeUntil, tabOf, timeLeft } from "./state/snooze";
 import type { Config, Tab } from "./store/config";
 import { RepoName } from "./ui";
@@ -21,13 +22,6 @@ const EMPTY: Record<Tab, string> = {
 };
 
 const byNumber = (a: Classified, b: Classified) => b.pr.number - a.pr.number;
-
-/** Split items into [repo, items] groups, keeping first-seen order. */
-function groupByRepo(items: Classified[]): [string, Classified[]][] {
-  const map = new Map<string, Classified[]>();
-  for (const i of items) map.set(i.pr.repo, [...(map.get(i.pr.repo) ?? []), i]);
-  return [...map];
-}
 
 /** The "My PRs" view: status tabs with per-repo collapsible groups and snooze actions. */
 export function MyPrs({
