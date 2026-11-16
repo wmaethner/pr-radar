@@ -36,7 +36,7 @@ Developed and used on macOS. Windows support is implemented but has only been co
 
 Portable as-is: the React UI, `classify.ts`, the GitHub and ADO clients, config storage (Tauri resolves the right directory per OS) and the link opener.
 
-Platform-specific code (all in `src-tauri/src/lib.rs` and `src/badge.ts`):
+Platform-specific code (all in `src-tauri/src/lib.rs` and `src/platform/badge.ts`):
 
 - **Finding `gh` and `az`.** macOS GUI apps don't inherit the shell PATH, so `bin_path` searches `/opt/homebrew/bin`, `/usr/local/bin` and `/usr/bin`. Windows GUI apps do inherit PATH, so `gh.exe` resolves by name, with `%ProgramFiles%\GitHub CLI` and `%LOCALAPPDATA%\Programs\GitHub CLI` checked first.
 - **Running `az` on Windows.** `az` is a `.cmd` wrapper, which Rust can't spawn reliably with arbitrary arguments (cmd.exe quoting of `&`, `%` and so on, and our URLs contain `&`). `az_command` runs the Azure CLI's bundled `python.exe -IBm azure.cli` from `%ProgramFiles%\Microsoft SDKs\Azure\CLI2` instead, the same thing the wrapper does, and falls back to `az.cmd` on PATH (for example a pip install).

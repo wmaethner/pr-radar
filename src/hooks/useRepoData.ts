@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchAll, type RepoResult } from "./providers";
-import type { Classified } from "./github/types";
-import { classify } from "./state/classify";
-import type { Config } from "./store/config";
+import { fetchAll, type RepoResult } from "../providers";
+import type { Classified } from "../github/types";
+import { classify } from "../state/classify";
+import type { Config } from "../store/config";
+
+export interface RefreshStatus {
+  at: number;
+  failed: boolean;
+}
 
 /** Fetches every configured repo on a timer and classifies the PRs; repos land one by one during a refresh. */
 export function useRepoData(config: Config | null) {
@@ -10,7 +15,7 @@ export function useRepoData(config: Config | null) {
   const [results, setResults] = useState<Record<string, RepoResult>>({});
   const [pending, setPending] = useState<string[]>([]);
   const [updated, setUpdated] = useState<Date | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<{ at: number; failed: boolean } | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<RefreshStatus | null>(null);
   const runId = useRef(0);
 
   const refresh = useCallback(async (repos: string[], account: string | null) => {

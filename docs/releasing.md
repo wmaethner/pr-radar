@@ -1,6 +1,6 @@
 # Releasing
 
-Releases are automated with [release-please](https://github.com/googleapis/release-please) and `.github/workflows/release.yml`, and published as GitHub Releases. Installed copies check the latest release for updates at startup (`src/update.ts`) and show an "Update and restart" banner.
+Releases are automated with [release-please](https://github.com/googleapis/release-please) and `.github/workflows/release.yml`, and published as GitHub Releases. Installed copies check the latest release for updates at startup (`src/platform/update.ts`) and show an "Update and restart" banner.
 
 ## One-time setup
 
