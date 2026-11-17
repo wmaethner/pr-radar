@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { listAccounts, onAccounts, type GhAccount } from "../github/accounts";
 import type { Config, View } from "../store/config";
 import type { RefreshStatus } from "../hooks/useRepoData";
-import { Settings } from "./Settings";
+import { Settings, type SettingsRequest } from "./Settings";
 import { labelOf } from "./ui";
 
 const VIEWS: { key: View; label: string }[] = [
@@ -23,6 +23,7 @@ export function Header({
   onRefresh,
   onAddRepo,
   onAddRepos,
+  settingsRequest,
 }: {
   config: Config;
   update: (next: Config) => Promise<void>;
@@ -35,6 +36,7 @@ export function Header({
   onRefresh: () => void;
   onAddRepo: (input: string) => Promise<string | null>;
   onAddRepos: (keys: string[]) => Promise<void>;
+  settingsRequest: SettingsRequest | null;
 }) {
   const [accounts, setAccounts] = useState<GhAccount[]>([]);
 
@@ -94,6 +96,7 @@ export function Header({
         onChange={update}
         onAddRepo={onAddRepo}
         onAddRepos={onAddRepos}
+        request={settingsRequest}
         onSignedIn={() => lastRefresh?.failed && onRefresh()}
         lastRefresh={lastRefresh}
       />

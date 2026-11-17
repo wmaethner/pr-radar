@@ -100,7 +100,7 @@ export function MyPrs({
                   <h3 {...toggler(subKey)}>
                     {chevron(subKey)}
                     <RepoName repo={repo} /> <span className="count">{items.length}</span>
-                    <OpenRepo repo={repo} root={config.codeRoot} />
+                    <OpenRepo repo={repo} />
                   </h3>
                 )}
                 {(groups.length === 1 || !isCollapsed(subKey)) &&
