@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { setActionBadge } from "./platform/badge";
 import { tabOf } from "./state/snooze";
 import { Backlog } from "./views/Backlog";
 import { Header } from "./components/Header";
 import { MyPrs } from "./views/MyPrs";
+import { Notice } from "./components/Notice";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { useCollapse } from "./hooks/useCollapse";
 import { useConfig } from "./hooks/useConfig";
+import { OpenRepoProvider } from "./hooks/useOpenRepo";
 import { useRepoData } from "./hooks/useRepoData";
+import { openRepoInVscode } from "./platform/editor";
 import { labelOf } from "./components/ui";
+import type { SettingsRequest } from "./components/Settings";
 import "./App.css";
 
 export default function App() {
@@ -16,6 +20,9 @@ export default function App() {
   const { config, update, addRepo, addRepos } = useConfig(now);
   const { results, pending, loading, updated, lastRefresh, items, errors, refresh } = useRepoData(config);
   const [repoFilter, setRepoFilter] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
+  // Asks the settings popover to open at a field; the id makes a repeat request a new one.
+  const [settingsRequest, setSettingsRequest] = useState<SettingsRequest | null>(null);
 
   // Tick so snoozes expire (and "wakes in" labels stay fresh) without waiting for a refresh.
   useEffect(() => {
@@ -24,6 +31,21 @@ export default function App() {
   }, []);
 
   const collapse = useCollapse(config, update);
+
+  // No code folder yet is a missing setting, not a failure: take the user to it. Real failures
+  // go to the notice, which stays until dismissed.
+  const codeRoot = config?.codeRoot ?? null;
+  const openRepo = useCallback(
+    async (repo: string) => {
+      if (!codeRoot) {
+        setSettingsRequest((r) => ({ field: "codeRoot", id: (r?.id ?? 0) + 1 }));
+        return;
+      }
+      const error = await openRepoInVscode(codeRoot, repo);
+      setNotice(error && `${labelOf(repo)}: ${error}`);
+    },
+    [codeRoot],
+  );
 
   const visible = useMemo(
     () => items.filter((i) => !repoFilter || i.pr.repo === repoFilter),
@@ -43,6 +65,7 @@ export default function App() {
   if (!config) return <main className="app">Loading…</main>;
 
   return (
+    <OpenRepoProvider value={openRepo}>
     <main className="app">
       <Header
         config={config}
@@ -56,9 +79,11 @@ export default function App() {
         onRefresh={() => refresh(config.repos, config.account)}
         onAddRepo={addRepo}
         onAddRepos={addRepos}
+        settingsRequest={settingsRequest}
       />
 
       <UpdateBanner />
+      <Notice message={notice} onDismiss={() => setNotice(null)} />
 
       {loading && (
         <p className="muted refreshing">
@@ -84,5 +109,6 @@ export default function App() {
         <MyPrs config={config} update={update} items={visible} now={now} loading={loading} collapse={collapse} />
       )}
     </main>
+    </OpenRepoProvider>
   );
 }

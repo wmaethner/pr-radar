@@ -66,6 +66,8 @@ export interface Provider {
   parse(input: string): string | null;
   /** Split a key for display: `owner` is the muted prefix, `name` the repo. */
   display(key: string): { owner: string; name: string };
+  /** Whether a git remote URL (as found in a local clone's .git/config) points at this repo. */
+  matchesRemote(key: string, remote: string): boolean;
   /** Fetch one repo's open PRs. May throw: `fetchAll` turns that into `RepoResult.error`. */
   fetchRepo(key: string, ctx: FetchContext): Promise<{ me: string; prs: PullRequest[]; issues?: Issue[] }>;
   /** List the repos this account can access, a page at a time, newest push first. Optional: hosts without it only take typed repos. */

@@ -1,6 +1,7 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { ReactNode } from "react";
 import type { Issue, PullRequest } from "../github/types";
+import { OpenRepo } from "../components/OpenRepo";
 import type { RepoResult } from "../providers";
 import { backlogIssues, backlogPrs, type BacklogPr, type IssueAssignment, type Reviewer } from "../state/backlog";
 import { ago, RepoName } from "../components/ui";
@@ -31,7 +32,7 @@ function reviewerTag(reviewers: Reviewer[]) {
   );
 }
 
-function PrBacklogRow({ item, showRepo }: { item: BacklogPr; showRepo: boolean }) {
+function PrBacklogRow({ item }: { item: BacklogPr }) {
   const { pr, reviewers } = item;
   return (
     <Row url={pr.url} className={reviewers.length === 0 ? "action" : "waiting"}>
@@ -40,8 +41,7 @@ function PrBacklogRow({ item, showRepo }: { item: BacklogPr; showRepo: boolean }
           {pr.title} <span className="muted">#{pr.number}</span>
         </span>
         <span className="meta">
-          {showRepo && <RepoName repo={pr.repo} />}
-          {showRepo && " · "}by {who(pr)} · updated {ago(pr.updatedAt)}
+          by {who(pr)} · updated {ago(pr.updatedAt)}
           {pr.reviewDecision === "CHANGES_REQUESTED" && " · changes requested"}
         </span>
       </div>
@@ -56,7 +56,7 @@ function assignmentTag(issue: Issue, assignment: IssueAssignment) {
   return <span className="tag assigned">{issue.assignees.map((a) => `@${a}`).join(", ")}</span>;
 }
 
-function IssueRow({ issue, assignment, showRepo }: { issue: Issue; assignment: IssueAssignment; showRepo: boolean }) {
+function IssueRow({ issue, assignment }: { issue: Issue; assignment: IssueAssignment }) {
   const parts = [
     issue.labels.join(", "),
     issue.commentCount > 0 ? `${issue.commentCount} comment${issue.commentCount === 1 ? "" : "s"}` : "",
@@ -70,8 +70,6 @@ function IssueRow({ issue, assignment, showRepo }: { issue: Issue; assignment: I
           {issue.title} <span className="muted">#{issue.number}</span>
         </span>
         <span className="meta">
-          {showRepo && <RepoName repo={issue.repo} />}
-          {showRepo && " · "}
           {parts.join(" · ")}
         </span>
       </div>
@@ -100,7 +98,7 @@ function Section<T>({
   empty: string;
   groups: [string, T[]][];
   collapse: Collapse;
-  render: (row: T, showRepo: boolean) => ReactNode;
+  render: (row: T) => ReactNode;
 }) {
   const total = groups.reduce((n, [, list]) => n + list.length, 0);
   const single = groups.length === 1;
@@ -115,13 +113,20 @@ function Section<T>({
         const key = `backlog:${id}/${repo}`;
         return (
           <div key={repo} className="repo-sub">
-            {!single && (
+            {/* A single repo has nothing to collapse, but its heading still carries the open button. */}
+            {single ? (
+              <h3>
+                <RepoName repo={repo} /> <span className="count">{list.length}</span>
+                <OpenRepo repo={repo} />
+              </h3>
+            ) : (
               <h3 {...collapse.toggler(key)}>
                 {collapse.chevron(key)}
                 <RepoName repo={repo} /> <span className="count">{list.length}</span>
+                <OpenRepo repo={repo} />
               </h3>
             )}
-            {(single || !collapse.isCollapsed(key)) && list.map((row) => render(row, single))}
+            {(single || !collapse.isCollapsed(key)) && list.map(render)}
           </div>
         );
       })}
@@ -158,7 +163,7 @@ export function Backlog({
         empty={loading ? "Loading…" : "No open PRs need a reviewer."}
         groups={byRepo(repos, prRows)}
         collapse={collapse}
-        render={(item, showRepo) => <PrBacklogRow key={item.pr.url} item={item} showRepo={showRepo} />}
+        render={(item) => <PrBacklogRow key={item.pr.url} item={item} />}
       />
       <Section
         id="issues"
@@ -166,8 +171,8 @@ export function Backlog({
         empty={loading ? "Loading…" : "No open issues."}
         groups={byRepo(repos, issueRows)}
         collapse={collapse}
-        render={(i, showRepo) => (
-          <IssueRow key={i.issue.url} issue={i.issue} assignment={i.assignment} showRepo={showRepo} />
+        render={(i) => (
+          <IssueRow key={i.issue.url} issue={i.issue} assignment={i.assignment} />
         )}
       />
     </>

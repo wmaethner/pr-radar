@@ -1,7 +1,7 @@
 import type { Provider } from "../providers/types";
 import { fetchAdoRepo } from "./client";
 import { azHealth } from "./health";
-import { fromAdoKey, parseAdoRepo } from "./repo";
+import { fromAdoKey, matchesAdoRemote, parseAdoRepo } from "./repo";
 
 export const ado: Provider = {
   id: "ado",
@@ -12,6 +12,7 @@ export const ado: Provider = {
     const r = fromAdoKey(key);
     return r ? { owner: `${r.org}/${r.project}`, name: r.repo } : { owner: "", name: key };
   },
+  matchesRemote: matchesAdoRemote,
   fetchRepo: (key, ctx) => fetchAdoRepo(key, ctx),
   health: azHealth,
 };

@@ -1,13 +1,21 @@
 import { getVersion } from "@tauri-apps/api/app";
+import { open as pickFolder } from "@tauri-apps/plugin-dialog";
 import { useEffect, useRef, useState } from "react";
 import { HealthPanel, isProblem, useHealth } from "./Health";
 import type { GhAccount } from "../github/accounts";
 import { repoListers } from "../providers";
 import { RepoPicker } from "./RepoPicker";
 import type { Config } from "../store/config";
+import { useClones } from "../hooks/useClones";
 import { labelOf } from "./ui";
 
 const POLL_CHOICES = [1, 2, 5, 10, 15, 30];
+
+/** Asks the popover to open and focus a field. The id makes a second request for the same field count. */
+export interface SettingsRequest {
+  field: "codeRoot";
+  id: number;
+}
 
 function GearIcon() {
   return (
@@ -30,6 +38,7 @@ export function Settings({
   onAddRepos,
   onSignedIn,
   lastRefresh,
+  request,
 }: {
   config: Config;
   accounts: GhAccount[];
@@ -42,6 +51,8 @@ export function Settings({
   onSignedIn: () => void;
   /** When the last full refresh finished, and whether any repo failed in it. */
   lastRefresh: { at: number; failed: boolean } | null;
+  /** Open the popover at a field, e.g. when "Open in VS Code" needs the code folder. */
+  request?: SettingsRequest | null;
 }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -49,6 +60,10 @@ export function Settings({
   const [version, setVersion] = useState("");
   const [browsing, setBrowsing] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const folderInput = useRef<HTMLInputElement>(null);
+  const focusFolder = useRef(false);
+  const [folderDraft, setFolderDraft] = useState(config.codeRoot ?? "");
+  const clones = useClones(config.codeRoot, config.repos, open);
   const { health, checking, checkedAt, checkedFor, recheck } = useHealth(config.repos, config.account);
   const problem = health?.some(isProblem) ?? false;
   // null means the first check is still running, which is as good as a fresh, clean one here.
@@ -57,6 +72,35 @@ export function Settings({
   useEffect(() => {
     getVersion().then(setVersion).catch(() => setVersion(""));
   }, []);
+
+  useEffect(() => setFolderDraft(config.codeRoot ?? ""), [config.codeRoot]);
+
+  // Opened on request: show the popover, then focus the field once it has rendered.
+  useEffect(() => {
+    if (!request) return;
+    focusFolder.current = true;
+    setOpen(true);
+  }, [request?.id]);
+  useEffect(() => {
+    if (!open || !focusFolder.current) return;
+    focusFolder.current = false;
+    folderInput.current?.focus();
+    folderInput.current?.scrollIntoView({ block: "nearest" });
+  }, [open]);
+
+  const commitFolder = (value: string) => {
+    const next = value.trim() || null;
+    if (next !== config.codeRoot) onChange({ ...config, codeRoot: next });
+  };
+  const browseFolder = async () => {
+    const picked = await pickFolder({
+      directory: true,
+      multiple: false,
+      defaultPath: config.codeRoot ?? undefined,
+      title: "Folder that holds your clones",
+    });
+    if (typeof picked === "string") commitFolder(picked);
+  };
 
   // Going green means the fix worked, but the repo errors on screen are from the last refresh,
   // made with the broken login. Refresh now rather than leaving them until the next poll. Only
@@ -124,6 +168,8 @@ export function Settings({
       {open && (
         <div className="popover" role="dialog" aria-label="Settings">
           <HealthPanel health={health} checking={checking} onRecheck={recheck} />
+
+          <div className="section-title">General</div>
           {accounts.length > 0 && (
             <label className="field">
               <span>GitHub account</span>
@@ -149,6 +195,32 @@ export function Settings({
               ))}
             </select>
           </label>
+
+          <div className="section-title">Open in VS Code</div>
+          <label className="field stack">
+            <span>Code folder: where your clones live</span>
+            <div className="folder-row">
+              <input
+                ref={folderInput}
+                value={folderDraft}
+                placeholder="~/Documents/GitHub"
+                onChange={(e) => setFolderDraft(e.target.value)}
+                onBlur={() => commitFolder(folderDraft)}
+                onKeyDown={(e) => e.key === "Enter" && commitFolder(folderDraft)}
+              />
+              <button type="button" onClick={browseFolder}>
+                Browse…
+              </button>
+            </div>
+          </label>
+          {clones.status === "scanning" && <p className="muted clone-summary">Looking for clones…</p>}
+          {clones.status === "error" && <p className="error clone-summary">{clones.message}</p>}
+          {clones.status === "ok" && (
+            <p className="muted clone-summary">
+              Found {clones.total} {clones.total === 1 ? "clone" : "clones"}
+              {config.repos.length > 0 && `; ${Object.keys(clones.matched).length} of your ${config.repos.length} repos matched`}.
+            </p>
+          )}
 
           <div className="section-title">
             Repos <span className="count">{config.repos.length}</span>
@@ -185,7 +257,14 @@ export function Settings({
           <ul className="repo-list">
             {config.repos.map((r) => (
               <li key={r}>
-                <span title={labelOf(r)}>{labelOf(r)}</span>
+                <span className="repo-label" title={labelOf(r)}>
+                  {labelOf(r)}
+                </span>
+                {clones.status === "ok" && !clones.matched[r] && (
+                  <span className="badge" title="No clone of this repo found under the code folder">
+                    no clone
+                  </span>
+                )}
                 <button
                   className="icon-btn"
                   title={`Remove ${labelOf(r)}`}

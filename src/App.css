@@ -205,3 +205,16 @@ header h1 { font-size: 16px; font-weight: 700; margin: 0; white-space: nowrap; l
 h2.panel-head { padding: 10px 14px; font-size: 14px; font-weight: 600; }
 .panel-body { padding: 4px 14px 14px; }
 .panel .tab { margin-bottom: 0; }
+
+.open-repo { min-width: 24px; height: 22px; font-size: 11px; font-family: ui-monospace, Menlo, monospace; margin-left: 4px; vertical-align: middle; }
+.popover .field.stack { flex-direction: column; align-items: stretch; gap: 4px; }
+.popover .field.stack > span { font-size: 12px; }
+.folder-row { display: flex; gap: 6px; }
+.folder-row input { flex: 1; min-width: 0; }
+.popover .clone-summary { margin: 0 0 8px; font-size: 12px; overflow-wrap: anywhere; }
+.repo-list li .repo-label { flex: 1; min-width: 0; }
+.repo-list li .badge { flex-shrink: 0; }
+/* A message that stays until dismissed; long paths and errors wrap instead of being cut off. */
+.notice { display: flex; align-items: flex-start; gap: 12px; background: var(--card); border: 1px solid #d70015; border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; }
+.notice > span { flex: 1; min-width: 0; color: #d70015; overflow-wrap: anywhere; }
+.notice .icon-btn { min-width: 22px; height: 22px; font-size: 12px; }

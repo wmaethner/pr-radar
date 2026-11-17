@@ -53,3 +53,21 @@ describe("fetchAll", () => {
     expect(seen.sort()).toEqual(["acme/site", "ado:bad"]);
   });
 });
+
+describe("matchesRemote", () => {
+  const gh = providers.find((p) => p.id === "github")!;
+  const ado = providers.find((p) => p.id === "ado")!;
+  it("matches GitHub https and ssh remotes, case-insensitively", () => {
+    expect(gh.matchesRemote("Acme/Site", "https://github.com/acme/site.git")).toBe(true);
+    expect(gh.matchesRemote("acme/site", "git@github.com:acme/site.git")).toBe(true);
+    expect(gh.matchesRemote("acme/site", "https://github.com/acme/site-two")).toBe(false);
+    expect(gh.matchesRemote("acme/site", "https://github.com/other/acme/site")).toBe(false);
+  });
+  it("matches ADO https, legacy and ssh remotes", () => {
+    const key = "ado:acme/My Proj/site";
+    expect(ado.matchesRemote(key, "https://acme@dev.azure.com/acme/My%20Proj/_git/site")).toBe(true);
+    expect(ado.matchesRemote(key, "https://acme.visualstudio.com/My%20Proj/_git/site")).toBe(true);
+    expect(ado.matchesRemote(key, "git@ssh.dev.azure.com:v3/acme/My Proj/site")).toBe(true);
+    expect(ado.matchesRemote(key, "https://dev.azure.com/other/My%20Proj/_git/site")).toBe(false);
+  });
+});

@@ -12,10 +12,11 @@ export interface Config {
   tab: Tab; // selected status tab
   snoozed: Snoozed; // PR url -> ISO time the snooze ends
   collapsed: string[]; // collapsed repo sub-group keys, e.g. "status:action/owner/name"
+  codeRoot: string | null; // folder holding local clones, used to open repos in VS Code
   account: string | null; // gh login to use; null = gh's active account
 }
 
-const DEFAULT: Config = { repos: [], pollMinutes: 5, view: "mine", tab: "action", snoozed: {}, collapsed: [], account: null };
+const DEFAULT: Config = { repos: [], pollMinutes: 5, view: "mine", tab: "action", snoozed: {}, collapsed: [], codeRoot: null, account: null };
 
 export async function loadConfig(): Promise<Config> {
   const raw = await invoke<string>("load_config");

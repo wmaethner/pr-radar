@@ -224,10 +224,76 @@ fn config_path(app: tauri::AppHandle) -> Result<String, String> {
     Ok(dir.to_string_lossy().into_owned())
 }
 
+#[derive(serde::Serialize)]
+struct LocalRepo {
+    path: String,
+    remotes: Vec<String>,
+}
+
+fn expand_home(path: &str) -> PathBuf {
+    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"));
+    match (path.strip_prefix("~"), home) {
+        (Some(rest), Some(home)) => PathBuf::from(home).join(rest.trim_start_matches(['/', '\\'])),
+        _ => PathBuf::from(path),
+    }
+}
+
+/// Remote URLs from a repo's `.git/config`, or none if `dir` isn't a clone.
+fn remotes_of(dir: &std::path::Path) -> Option<Vec<String>> {
+    let config = fs::read_to_string(dir.join(".git").join("config")).ok()?;
+    Some(
+        config
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix("url"))
+            .filter_map(|l| l.trim_start().strip_prefix('='))
+            .map(|u| u.trim().to_string())
+            .collect(),
+    )
+}
+
+/// Git clones directly under `root` or one level deeper (e.g. `root/owner/repo`), with their remote URLs.
+#[tauri::command]
+fn scan_repos(root: String) -> Result<Vec<LocalRepo>, String> {
+    let root = expand_home(&root);
+    let mut found = Vec::new();
+    let subdirs = |dir: &std::path::Path| -> Vec<PathBuf> {
+        fs::read_dir(dir)
+            .map(|rd| {
+                rd.filter_map(|e| e.ok())
+                    .map(|e| e.path())
+                    .filter(|p| {
+                        p.is_dir()
+                            && !p
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .is_some_and(|n| n.starts_with('.') || n == "node_modules")
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    if !root.is_dir() {
+        return Err(format!("{} is not a folder", root.display()));
+    }
+    for dir in subdirs(&root) {
+        if let Some(remotes) = remotes_of(&dir) {
+            found.push(LocalRepo { path: dir.to_string_lossy().into_owned(), remotes });
+        } else {
+            for inner in subdirs(&dir) {
+                if let Some(remotes) = remotes_of(&inner) {
+                    found.push(LocalRepo { path: inner.to_string_lossy().into_owned(), remotes });
+                }
+            }
+        }
+    }
+    Ok(found)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
             #[cfg(desktop)]
@@ -241,7 +307,8 @@ pub fn run() {
             az_health,
             load_config,
             save_config,
-            config_path
+            config_path,
+            scan_repos
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
