@@ -65,6 +65,7 @@ export function matchesAdoRemote(key: string, remote: string): boolean {
     // keep the raw text
   }
   const [org, project, repo] = [r.org, r.project, r.repo].map((x) => x.toLowerCase());
-  if (!url.includes(org)) return false;
+  // The org must be a whole name in the URL: org "ac" is not "acme".
+  if (!new RegExp(`(^|[^a-z0-9-])${org.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9-]|$)`).test(url)) return false;
   return url.endsWith(`/${project}/_git/${repo}`) || url.endsWith(`/${project}/${repo}`) || (project === repo && url.endsWith(`/_git/${repo}`));
 }

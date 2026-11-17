@@ -7,5 +7,7 @@ export function parseRepo(input: string): string | null {
 /** Whether a remote URL (https or ssh form) points at the GitHub repo "owner/name". */
 export function matchesGithubRemote(key: string, remote: string): boolean {
   const url = remote.trim().toLowerCase().replace(/\.git$/, "").replace(/\/$/, "").replace(":", "/");
-  return url.endsWith(`github.com/${key.toLowerCase()}`);
+  // The host must start at a boundary, so "notgithub.com/acme/site" is not "github.com/acme/site".
+  const tail = `github.com/${key.toLowerCase()}`;
+  return url === tail || url.endsWith(`/${tail}`) || url.endsWith(`@${tail}`);
 }
