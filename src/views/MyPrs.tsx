@@ -96,17 +96,21 @@ export function MyPrs({
             const subKey = `status:${config.tab}/${repo}`;
             return (
               <div key={repo} className="repo-sub">
-                {groups.length > 1 && (
+                {/* A single repo has nothing to collapse, but its heading still carries the open button. */}
+                {groups.length > 1 ? (
                   <h3 {...toggler(subKey)}>
                     {chevron(subKey)}
                     <RepoName repo={repo} /> <span className="count">{items.length}</span>
                     <OpenRepo repo={repo} />
                   </h3>
+                ) : (
+                  <h3>
+                    <RepoName repo={repo} /> <span className="count">{items.length}</span>
+                    <OpenRepo repo={repo} />
+                  </h3>
                 )}
                 {(groups.length === 1 || !isCollapsed(subKey)) &&
-                  items.map((item) => (
-                    <PrRow key={item.pr.url} item={item} showRepo={groups.length === 1} action={snoozeAction(item)} />
-                  ))}
+                  items.map((item) => <PrRow key={item.pr.url} item={item} action={snoozeAction(item)} />)}
               </div>
             );
           })}

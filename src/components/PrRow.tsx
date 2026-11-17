@@ -2,7 +2,7 @@ import { useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { Classified } from "../github/types";
 import { stackChip, stackStatus } from "../state/stack";
-import { RepoName, ago } from "./ui";
+import { ago } from "./ui";
 
 export interface RowAction {
   note?: string;
@@ -11,7 +11,7 @@ export interface RowAction {
   run: () => void;
 }
 
-export function PrRow({ item, showRepo, action }: { item: Classified; showRepo: boolean; action?: RowAction }) {
+export function PrRow({ item, action }: { item: Classified; action?: RowAction }) {
   const { pr, role, reason, bucket } = item;
   const stack = stackStatus(pr);
   const chip = stack && stackChip(stack, bucket);
@@ -24,8 +24,6 @@ export function PrRow({ item, showRepo, action }: { item: Classified; showRepo: 
             {pr.title} <span className="muted">#{pr.number}</span>
           </span>
           <span className="meta">
-            {showRepo && <RepoName repo={pr.repo} />}
-            {showRepo && " · "}
             {role === "author" ? "Your PR" : `Reviewing · by ${pr.author?.name ?? pr.author?.login ?? "unknown"}`} · updated {ago(pr.updatedAt)}
           </span>
         </div>
