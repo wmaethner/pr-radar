@@ -3,6 +3,7 @@ import type { Classified } from "../github/types";
 import type { Collapse } from "./Backlog";
 import { OpenRepo } from "../components/OpenRepo";
 import { PrRow, type RowAction } from "../components/PrRow";
+import { byAge } from "../state/age";
 import { groupByRepo } from "../state/group";
 import { snoozeUntil, tabOf, timeLeft } from "../state/snooze";
 import type { Config, Tab } from "../store/config";
@@ -21,8 +22,6 @@ const EMPTY: Record<Tab, string> = {
   ready: "No PRs are ready to merge.",
   waiting: "Nothing is waiting on others.",
 };
-
-const byNumber = (a: Classified, b: Classified) => b.pr.number - a.pr.number;
 
 /** The "My PRs" view: status tabs with per-repo collapsible groups and snooze actions. */
 export function MyPrs({
@@ -49,7 +48,7 @@ export function MyPrs({
     return c;
   }, [items, config.snoozed, now]);
 
-  const rows = items.filter((i) => tabOf(i, config.snoozed, now) === config.tab).sort(byNumber);
+  const rows = items.filter((i) => tabOf(i, config.snoozed, now) === config.tab).sort(byAge);
   const snoozeAction = (item: Classified): RowAction | undefined => {
     const url = item.pr.url;
     if (config.tab === "action")
@@ -110,7 +109,7 @@ export function MyPrs({
                   </h3>
                 )}
                 {(groups.length === 1 || !isCollapsed(subKey)) &&
-                  items.map((item) => <PrRow key={item.pr.url} item={item} action={snoozeAction(item)} />)}
+                  items.map((item) => <PrRow now={now} key={item.pr.url} item={item} action={snoozeAction(item)} />)}
               </div>
             );
           })}

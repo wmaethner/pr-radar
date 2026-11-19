@@ -100,6 +100,18 @@ describe("authored PRs", () => {
     const reviews = [{ author: mine, state: "COMMENTED" as const, submittedAt: "2026-01-03T00:00:00Z" }];
     expect(classify(pr({ comments, reviews }), ME)?.reason).toBe("New comment on your PR");
   });
+  it("dates changes requested from the review", () => {
+    const reviews = [{ author: them, state: "CHANGES_REQUESTED" as const, submittedAt: "2026-01-04T00:00:00Z" }];
+    const c = classify(pr({ reviewDecision: "CHANGES_REQUESTED", reviews, lastCommitAt: "2026-01-02T00:00:00Z" }), ME);
+    expect(c).toMatchObject({ reason: "Changes requested", since: "2026-01-04T00:00:00Z" });
+  });
+  it("dates a new comment from the oldest one I haven't answered", () => {
+    const comments = [
+      { author: them, createdAt: "2026-01-05T00:00:00Z" },
+      { author: them, createdAt: "2026-01-04T00:00:00Z" },
+    ];
+    expect(classify(pr({ comments }), ME)?.since).toBe("2026-01-04T00:00:00Z");
+  });
   it("treats own draft as waiting", () => {
     expect(classify(pr({ isDraft: true }), ME)).toMatchObject({ bucket: "waiting", reason: "Draft" });
   });
@@ -112,6 +124,10 @@ describe("reviewing PRs", () => {
   });
   it("flags review request", () => {
     expect(classify(theirs({ requestedReviewers: [ME] }), ME)).toMatchObject({ bucket: "action", reason: "Review requested" });
+  });
+  it("dates a review request from when I was asked", () => {
+    const requestedAt = { [ME]: "2026-01-05T00:00:00Z" };
+    expect(classify(theirs({ requestedReviewers: [ME], requestedAt }), ME)?.since).toBe("2026-01-05T00:00:00Z");
   });
   it("flags re-review request", () => {
     const reviews = [{ author: mine, state: "COMMENTED" as const, submittedAt: "2026-01-02T00:00:00Z" }];

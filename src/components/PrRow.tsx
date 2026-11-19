@@ -2,6 +2,7 @@ import { useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { Classified } from "../github/types";
 import { stackChip, stackStatus } from "../state/stack";
+import { ageLabel, ageTone } from "../state/age";
 import { ago } from "./ui";
 
 export interface RowAction {
@@ -11,8 +12,8 @@ export interface RowAction {
   run: () => void;
 }
 
-export function PrRow({ item, action }: { item: Classified; action?: RowAction }) {
-  const { pr, role, reason, bucket } = item;
+export function PrRow({ item, action, now }: { item: Classified; action?: RowAction; now: Date }) {
+  const { pr, role, reason, bucket, since } = item;
   const stack = stackStatus(pr);
   const chip = stack && stackChip(stack, bucket);
   const [stackOpen, setStackOpen] = useState(false);
@@ -36,6 +37,14 @@ export function PrRow({ item, action }: { item: Classified; action?: RowAction }
           >
             {stackOpen ? "▾" : "▸"} {chip.text}
           </button>
+        )}
+        {since && (
+          <span
+            className={`age ${ageTone(since, now)}`}
+            title={`In this state since ${new Date(since).toLocaleString()}`}
+          >
+            {ageLabel(since, now)}
+          </span>
         )}
         <span className={`tag ${bucket}`}>{reason}</span>
         {action?.note && <span className="meta note">{action.note}</span>}

@@ -11,6 +11,9 @@ query($owner: String!, $name: String!) {
         author { login }
         commits(last: 1) { nodes { commit { committedDate statusCheckRollup { state } } } }
         reviewRequests(first: 20) { nodes { requestedReviewer { ... on User { login } } } }
+        timelineItems(last: 50, itemTypes: [REVIEW_REQUESTED_EVENT]) {
+          nodes { ... on ReviewRequestedEvent { createdAt requestedReviewer { ... on User { login } } } }
+        }
         reviews(last: 50) { nodes { author { login } state submittedAt } }
         reviewThreads(first: 50) {
           nodes { isResolved comments(first: 30) { nodes { author { login } createdAt } } }
@@ -71,6 +74,18 @@ export function toStack(entry: any): StackInfo | undefined {
   return { position: entry.position, size: stack.size, members };
 }
 
+/** Latest time each user was asked to review, from ReviewRequestedEvent nodes. */
+export function toRequestedAt(
+  nodes: { createdAt?: string; requestedReviewer?: { login?: string } | null }[],
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const n of nodes) {
+    const login = n.requestedReviewer?.login;
+    if (login && n.createdAt && (!out[login] || n.createdAt > out[login])) out[login] = n.createdAt;
+  }
+  return out;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toPr(repo: string, n: any): PullRequest {
   const commit = n.commits.nodes[0]?.commit;
@@ -88,6 +103,7 @@ function toPr(repo: string, n: any): PullRequest {
     requestedReviewers: n.reviewRequests.nodes
       .map((r: { requestedReviewer: { login?: string } | null }) => r.requestedReviewer?.login)
       .filter(Boolean),
+    requestedAt: toRequestedAt(n.timelineItems?.nodes ?? []),
     reviews: n.reviews.nodes,
     threads: n.reviewThreads.nodes,
     comments: n.comments.nodes.map((c: { author: { login: string; __typename: string } | null; createdAt: string }) => ({
