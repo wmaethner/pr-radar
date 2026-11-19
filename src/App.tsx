@@ -12,6 +12,7 @@ import { OpenRepoProvider } from "./hooks/useOpenRepo";
 import { useRepoData } from "./hooks/useRepoData";
 import { openRepoInVscode } from "./platform/editor";
 import { labelOf } from "./components/ui";
+import { Footer } from "./components/Footer";
 import type { SettingsRequest } from "./components/Settings";
 import "./App.css";
 
@@ -21,7 +22,7 @@ export default function App() {
   const { results, pending, loading, updated, lastRefresh, items, errors, refresh } = useRepoData(config);
   const [repoFilter, setRepoFilter] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
-  // Asks the settings popover to open at a field; the id makes a repeat request a new one.
+  // Asks the settings dialog to open at a field; the id makes a repeat request a new one.
   const [settingsRequest, setSettingsRequest] = useState<SettingsRequest | null>(null);
 
   // Tick so snoozes expire (and "wakes in" labels stay fresh) without waiting for a refresh.
@@ -108,6 +109,8 @@ export default function App() {
       ) : (
         <MyPrs config={config} update={update} items={visible} now={now} loading={loading} collapse={collapse} />
       )}
+
+      <Footer />
     </main>
     </OpenRepoProvider>
   );

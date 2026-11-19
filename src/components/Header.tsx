@@ -10,7 +10,7 @@ const VIEWS: { key: View; label: string }[] = [
   { key: "backlog", label: "Backlog" },
 ];
 
-/** Brand, view switch, repo filter, refresh button and the settings popover. */
+/** Brand, view switch, repo filter, refresh button and the settings button. */
 export function Header({
   config,
   update,
