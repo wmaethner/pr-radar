@@ -24,7 +24,7 @@ src/App.tsx                      Shell: wires the hooks to Header, UpdateBanner 
 src/views/Backlog.tsx            Backlog view: PRs needing review (with assigned reviewers) and open issues, grouped by repo
 src/views/MyPrs.tsx              "My PRs" view: status tabs, per-repo groups, snooze actions
 src/components/Health.tsx        Sign-in panel in the settings dialog; useHealth() runs each provider check
-src/components/Settings.tsx      Gear button in the header that opens the Settings modal, with tabs: Accounts (sign-in, GitHub account), General (refresh interval, version), Repos, Editor (code folder)
+src/components/Settings.tsx      Gear button + modal shell (open state, tab list, Escape/backdrop); the tab bodies live in src/components/settings/ (AccountsTab, GeneralTab, ReposTab, EditorTab)
 src/components/RepoPicker.tsx    "Browse your repos" overlay: search the account's repos and add several at once
 src/components/ui.tsx            Small shared UI helpers (ago, RepoName, labelOf)
 src/components/Header.tsx        Brand, view switch, repo filter, refresh button, settings button (owns the account list)
@@ -37,6 +37,7 @@ src/components/Notice.tsx        A dismissible message that wraps long text (use
 src/hooks/useConfig.ts           Hook: config load/save/update, addRepo(s), expired-snooze pruning
 src/hooks/useRepoData.ts         Hook: polling, per-repo results as they land, classify, errors, last refresh
 src/hooks/useCollapse.tsx        Hook: collapsible section helpers persisted in Config.collapsed
+src/hooks/useSignInWatch.ts      Hook: the sign-in check plus its watching (red dot, refresh after a fix, recheck on open); called from Settings so it runs while the modal is closed
 src/hooks/useClones.ts           Hook: scans the code folder while settings is open and says which repos have a clone
 src/hooks/useOpenRepo.tsx        Context carrying App's openRepo to the "</>" buttons
 src/platform/badge.ts            Dock badge count (macOS) / drawn taskbar overlay icon (Windows)
