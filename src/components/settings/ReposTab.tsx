@@ -12,8 +12,6 @@ export function ReposTab({
   onAddRepo,
   onAddRepos,
   clones,
-  browsing,
-  onBrowsing,
 }: {
   config: Config;
   onChange: (next: Config) => void;
@@ -22,12 +20,10 @@ export function ReposTab({
   /** Adds several repo keys at once (from the picker), skipping ones already added. */
   onAddRepos: (keys: string[]) => Promise<void>;
   clones: ClonesState;
-  /** Whether the picker is open. The dialog needs to know: the picker handles its own Escape. */
-  browsing: boolean;
-  onBrowsing: (browsing: boolean) => void;
 }) {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [browsing, setBrowsing] = useState(false);
 
   const submit = async () => {
     const err = await onAddRepo(input);
@@ -55,7 +51,7 @@ export function ReposTab({
       </form>
       {error && <p className="error">{error}</p>}
       {repoListers().length > 0 && (
-        <button type="button" className="link-btn browse-btn" onClick={() => onBrowsing(true)}>
+        <button type="button" className="link-btn browse-btn" onClick={() => setBrowsing(true)}>
           Browse your repos…
         </button>
       )}
@@ -64,7 +60,7 @@ export function ReposTab({
           account={config.account}
           added={config.repos}
           onAdd={onAddRepos}
-          onClose={() => onBrowsing(false)}
+          onClose={() => setBrowsing(false)}
         />
       )}
       <div className="section-title">

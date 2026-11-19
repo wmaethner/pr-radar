@@ -24,6 +24,7 @@ src/App.tsx                      Shell: wires the hooks to Header, UpdateBanner 
 src/views/Backlog.tsx            Backlog view: PRs needing review (with assigned reviewers) and open issues, grouped by repo
 src/views/MyPrs.tsx              "My PRs" view: status tabs, per-repo groups, snooze actions
 src/components/Health.tsx        Sign-in panel in the settings dialog; useHealth() runs each provider check
+src/components/Modal.tsx         Shared dialog shell (backdrop, title bar, close button; Escape closes only the innermost): Settings and RepoPicker
 src/components/Settings.tsx      Gear button + modal shell (open state, tab list, Escape/backdrop); the tab bodies live in src/components/settings/ (AccountsTab, GeneralTab, ReposTab, EditorTab)
 src/components/RepoPicker.tsx    "Browse your repos" overlay: search the account's repos and add several at once
 src/components/ui.tsx            Small shared UI helpers (ago, RepoName, labelOf)

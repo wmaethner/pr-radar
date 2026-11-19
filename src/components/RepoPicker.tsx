@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { repoListers } from "../providers";
 import type { RepoChoice } from "../providers/types";
 import { filterChoices, MAX_LOADED, mergeChoices, ownersOf } from "../state/repoPicker";
+import { Modal } from "./Modal";
 import { RepoName } from "./ui";
 
 /**
@@ -86,21 +87,8 @@ export function RepoPicker({
   };
 
   return (
-    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div
-        className="picker"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Browse repos"
-        onKeyDown={(e) => e.key === "Escape" && onClose()}
-      >
-        <div className="picker-head">
-          <strong>Browse repos</strong>
-          <button className="icon-btn" aria-label="Close" title="Close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-
+    <Modal title="Browse repos" onClose={onClose} className="picker">
+      <div className="picker-body">
         <div className="picker-filters">
           <input
             autoFocus
@@ -188,6 +176,6 @@ export function RepoPicker({
           </span>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
