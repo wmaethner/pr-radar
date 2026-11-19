@@ -53,6 +53,7 @@ export interface PullRequest {
   lastCommitAt: string | null;
   ciState: "SUCCESS" | "FAILURE" | "ERROR" | "PENDING" | "EXPECTED" | null;
   requestedReviewers: string[];
+  requestedAt?: Record<string, string>; // reviewer login -> when they were last asked (GitHub only)
   reviews: Review[];
   threads: ReviewThread[];
   comments: TimedComment[];
@@ -79,4 +80,5 @@ export interface Classified {
   role: "author" | "reviewer";
   bucket: Bucket;
   reason: string;
+  since: string | null; // when the PR entered this state, when known
 }

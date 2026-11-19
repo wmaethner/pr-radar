@@ -58,6 +58,10 @@ button { cursor: pointer; }
 }
 .tag.action { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
 .tag.ready { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+.age { flex-shrink: 0; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.age.aging { color: #b36b00; font-weight: 600; }
+.age.old { color: var(--danger); font-weight: 700; }
+@media (prefers-color-scheme: dark) { .age.aging { color: #ffb340; } }
 .pr:hover { border-color: #0a84ff; }
 .note { flex-shrink: 0; white-space: nowrap; }
 .row-action { flex-shrink: 0; font-size: 12px; line-height: 1; padding: 3px 5px; color: var(--muted); }
