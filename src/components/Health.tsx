@@ -94,6 +94,7 @@ export function useHealth(repos: string[], account: string | null) {
   const check = useCallback(() => runner.current!(), []);
 
   // `repos` only matters through which hosts it brings in, so adding a repo doesn't re-run gh.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: hosts and account are triggers: re-check when either changes, even though check() does not read them
   useEffect(() => {
     check();
   }, [hosts, account, check]);

@@ -76,6 +76,7 @@ export function Settings({
   useEffect(() => setFolderDraft(config.codeRoot ?? ""), [config.codeRoot]);
 
   // Opened on request: show the popover, then focus the field once it has rendered.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when a new request arrives (request.id), not on every render of the request object
   useEffect(() => {
     if (!request) return;
     focusFolder.current = true;
@@ -107,22 +108,22 @@ export function Settings({
   // for the same account and hosts: a switch or a removed host isn't a fix, and App already
   // refreshes on an account change.
   const was = useRef<{ key: string; ok: boolean } | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the check result changes; the other values are read as of that check
   useEffect(() => {
     if (!health) return;
     if (was.current && was.current.key === checkedFor && !was.current.ok && allOk) onSignedIn();
     was.current = { key: checkedFor, ok: allOk };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [health]);
 
   // Refreshes starting to fail is how a token that dies mid-session first shows up, and starting
   // to succeed again is how a fix does: re-check on those changes, so the red dot follows without
   // opening settings. Not on every failed poll, since a repo can fail for reasons unrelated to sign-in.
   const lastFailed = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per finished refresh (lastRefresh.at); recheck() is recreated every render
   useEffect(() => {
     if (!lastRefresh) return;
     if (lastRefresh.failed !== lastFailed.current) recheck();
     lastFailed.current = lastRefresh.failed;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastRefresh?.at]);
 
   // Opening settings is when the user looks at sign-in, so re-check then unless the last check

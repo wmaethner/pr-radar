@@ -35,11 +35,11 @@ export function useConfig(now: Date) {
   };
 
   // Drop expired snoozes from the saved config.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: prune once per tick (now), not on every config change, or saving would loop
   useEffect(() => {
     if (!config) return;
     const live = pruneSnoozed(config.snoozed, now);
     if (live !== config.snoozed) update({ ...config, snoozed: live });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [now]);
 
   return { config, update, addRepo, addRepos };

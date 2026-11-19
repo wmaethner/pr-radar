@@ -12,6 +12,7 @@ The goal is a single glanceable view of "what do I need to do on PRs right now",
 
 - `npm run tauri dev` – run the full app (needs Rust toolchain and `gh` logged in)
 - `npm run dev` – frontend only (Tauri `invoke` calls will fail outside the Tauri shell)
+- `npm run lint` – Biome (`biome.json`): errors on explicit `any` and on incomplete React hook dependencies; CI runs it
 - `npm test` – vitest (currently only `src/state/classify.test.ts`)
 - `npm run build` – `tsc` + `vite build`
 
@@ -51,6 +52,7 @@ src/store/config.ts              Config (repos, pollMinutes, tab, snoozed, colla
 src/providers/                   Provider interface + registry: fetchAll(), parseAnyRepo(), repoDisplay(); one runner for fan-out/errors
 src/github/accounts.ts           Lists logged-in gh accounts; ghAuthStatus() shares one gh_auth_status run between the picker and the Sign-in panel, and onAccounts() keeps the picker current
 src/github/health.ts             Pure parseGhHealth(): gh install + per-account token state -> Health
+src/github/raw.ts                Types of the GraphQL nodes client.ts queries (RawPullRequest, RawIssue, RawStackEntry); keep in step with REPO_QUERY
 src/github/provider.ts           GitHub Provider (key "owner/name"); client.ts has the GraphQL query + fetchRepo()
 src/github/repos.ts              listRepos(): one page of the repos the account can access (viewer.repositories), plus pure parseViewerRepos()
 src/github/types.ts              PullRequest, Classified, Bucket and related types (shared by GitHub and ADO)
@@ -96,5 +98,6 @@ To add a code host, implement `Provider` (`src/providers/types.ts`) in its own f
 
 - Match the existing style: small modules, plain functions, no state library, no CSS framework (`App.css`).
 - Keep GitHub response shaping in `src/github/`, and decision logic in `src/state/`.
+- Lint is Biome with only two rules on (`noExplicitAny`, `useExhaustiveDependencies`), formatting off. Suppress with `// biome-ignore lint/...: reason` and always give the reason; several effects are deliberately "re-run when X changes". Type external data at the boundary: GraphQL nodes via `raw.ts`, saved config via `parseConfig` (falls back per field).
 - Don't add token handling or direct HTTP calls to GitHub without discussing it; the `gh` approach is deliberate.
 - Use Conventional Commit PR titles (`feat:`, `fix:`, `docs:`, ...): release-please builds the version and changelog from them. Don't bump versions by hand; see `docs/releasing.md`.
