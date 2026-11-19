@@ -13,7 +13,7 @@ const matches = (key: string, remote: string) => providerOf(key)?.matchesRemote(
 
 /**
  * Scans `root` for clones and says which of `repos` have one. Only scans while `enabled` (the
- * settings popover is open), so nothing walks the disk in the background.
+ * settings dialog is open), so nothing walks the disk in the background.
  */
 export function useClones(root: string | null, repos: string[], enabled: boolean): ClonesState {
   const [scan, setScan] = useState<{ root: string; clones: LocalRepo[] } | { root: string; error: string } | null>(null);

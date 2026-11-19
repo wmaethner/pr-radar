@@ -1,4 +1,3 @@
-import { getVersion } from "@tauri-apps/api/app";
 import { open as pickFolder } from "@tauri-apps/plugin-dialog";
 import { useEffect, useRef, useState } from "react";
 import { HealthPanel, isProblem, useHealth } from "./Health";
@@ -6,16 +5,26 @@ import type { GhAccount } from "../github/accounts";
 import { repoListers } from "../providers";
 import { RepoPicker } from "./RepoPicker";
 import type { Config } from "../store/config";
+import { useAppVersion } from "../hooks/useAppVersion";
 import { useClones } from "../hooks/useClones";
 import { labelOf } from "./ui";
 
 const POLL_CHOICES = [1, 2, 5, 10, 15, 30];
 
-/** Asks the popover to open and focus a field. The id makes a second request for the same field count. */
+/** Asks the settings dialog to open and focus a field. The id makes a second request for the same field count. */
 export interface SettingsRequest {
   field: "codeRoot";
   id: number;
 }
+
+type SettingsTab = "accounts" | "general" | "repos" | "editor";
+
+const TABS: { key: SettingsTab; label: string }[] = [
+  { key: "accounts", label: "Accounts" },
+  { key: "general", label: "General" },
+  { key: "repos", label: "Repos" },
+  { key: "editor", label: "Editor" },
+];
 
 function GearIcon() {
   return (
@@ -26,10 +35,10 @@ function GearIcon() {
   );
 }
 
-/** A clean sign-in check younger than this is reused when the popover opens. */
+/** A clean sign-in check younger than this is reused when the dialog opens. */
 const RECHECK_AFTER_MS = 60_000;
 
-/** Gear button that opens a popover with account, repo management and polling. */
+/** Gear button that opens a modal dialog with account, repo management and polling. */
 export function Settings({
   config,
   accounts,
@@ -51,15 +60,15 @@ export function Settings({
   onSignedIn: () => void;
   /** When the last full refresh finished, and whether any repo failed in it. */
   lastRefresh: { at: number; failed: boolean } | null;
-  /** Open the popover at a field, e.g. when "Open in VS Code" needs the code folder. */
+  /** Open the dialog at a field, e.g. when "Open in VS Code" needs the code folder. */
   request?: SettingsRequest | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<SettingsTab>("accounts");
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [version, setVersion] = useState("");
+  const version = useAppVersion();
   const [browsing, setBrowsing] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
   const focusFolder = useRef(false);
   const [folderDraft, setFolderDraft] = useState(config.codeRoot ?? "");
@@ -69,25 +78,21 @@ export function Settings({
   // null means the first check is still running, which is as good as a fresh, clean one here.
   const allOk = health?.every((h) => h.ok) ?? true;
 
-  useEffect(() => {
-    getVersion().then(setVersion).catch(() => setVersion(""));
-  }, []);
-
   useEffect(() => setFolderDraft(config.codeRoot ?? ""), [config.codeRoot]);
 
-  // Opened on request: show the popover, then focus the field once it has rendered.
+  // Opened on request: show the dialog, then focus the field once it has rendered.
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs when a new request arrives (request.id), not on every render of the request object
   useEffect(() => {
     if (!request) return;
     focusFolder.current = true;
+    setTab("editor");
     setOpen(true);
   }, [request?.id]);
   useEffect(() => {
-    if (!open || !focusFolder.current) return;
+    if (!open || tab !== "editor" || !focusFolder.current) return;
     focusFolder.current = false;
     folderInput.current?.focus();
-    folderInput.current?.scrollIntoView({ block: "nearest" });
-  }, [open]);
+  }, [open, tab]);
 
   const commitFolder = (value: string) => {
     const next = value.trim() || null;
@@ -129,24 +134,18 @@ export function Settings({
   // Opening settings is when the user looks at sign-in, so re-check then unless the last check
   // was recent and clean: it also clears "couldn't reach GitHub" once the network is back.
   const toggle = () => {
+    if (!open) setTab("accounts");
     if (!open && health && (!allOk || Date.now() - checkedAt > RECHECK_AFTER_MS)) recheck();
     setOpen(!open);
   };
 
-  // Close on a click outside or Escape.
+  // Close on Escape. A click on the backdrop closes it too (see the overlay below).
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
-    };
-    // The picker handles its own Escape; closing the popover under it too would lose it with it.
+    // The picker handles its own Escape; closing the dialog under it too would lose it with it.
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !browsing && setOpen(false);
-    document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open, browsing]);
 
   const submit = async () => {
@@ -156,129 +155,186 @@ export function Settings({
   };
 
   return (
-    <div className="settings" ref={root}>
+    <div className="settings">
       <button
         className={problem ? "icon-btn has-problem" : "icon-btn"}
         title={problem ? "Settings — a sign-in needs attention" : "Settings"}
         aria-label={problem ? "Settings, a sign-in needs attention" : "Settings"}
+        aria-haspopup="dialog"
         aria-expanded={open}
         onClick={toggle}
       >
         <GearIcon />
       </button>
       {open && (
-        <div className="popover" role="dialog" aria-label="Settings">
-          <HealthPanel health={health} checking={checking} onRecheck={recheck} />
-
-          <div className="section-title">General</div>
-          {accounts.length > 0 && (
-            <label className="field">
-              <span>GitHub account</span>
-              <select
-                value={config.account ?? accounts.find((a) => a.active)?.login ?? ""}
-                onChange={(e) => onChange({ ...config, account: e.target.value })}
-              >
-                {accounts.map((a) => (
-                  <option key={a.login} value={a.login}>
-                    @{a.login}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <label className="field">
-            <span>Refresh every</span>
-            <select value={config.pollMinutes} onChange={(e) => onChange({ ...config, pollMinutes: Number(e.target.value) })}>
-              {[...new Set([...POLL_CHOICES, config.pollMinutes])].sort((a, b) => a - b).map((m) => (
-                <option key={m} value={m}>
-                  {m} min
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="section-title">Open in VS Code</div>
-          <label className="field stack">
-            <span>Code folder: where your clones live</span>
-            <div className="folder-row">
-              <input
-                ref={folderInput}
-                value={folderDraft}
-                placeholder="~/Documents/GitHub"
-                onChange={(e) => setFolderDraft(e.target.value)}
-                onBlur={() => commitFolder(folderDraft)}
-                onKeyDown={(e) => e.key === "Enter" && commitFolder(folderDraft)}
-              />
-              <button type="button" onClick={browseFolder}>
-                Browse…
+        <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="Settings">
+            <div className="modal-head">
+              <strong>Settings</strong>
+              <button type="button" className="icon-btn" aria-label="Close" title="Close" onClick={() => setOpen(false)}>
+                ✕
               </button>
             </div>
-          </label>
-          {clones.status === "scanning" && <p className="muted clone-summary">Looking for clones…</p>}
-          {clones.status === "error" && <p className="error clone-summary">{clones.message}</p>}
-          {clones.status === "ok" && (
-            <p className="muted clone-summary">
-              Found {clones.total} {clones.total === 1 ? "clone" : "clones"}
-              {config.repos.length > 0 && `; ${Object.keys(clones.matched).length} of your ${config.repos.length} repos matched`}.
-            </p>
-          )}
-
-          <div className="section-title">
-            Repos <span className="count">{config.repos.length}</span>
-          </div>
-          <form
-            className="add-repo"
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit();
-            }}
-          >
-            <input
-              value={input}
-              onChange={(e) => (setInput(e.target.value), setError(null))}
-              placeholder="owner/name or repo URL"
-              aria-label="Add a repo"
-            />
-            <button type="submit">Add</button>
-          </form>
-          {error && <p className="error">{error}</p>}
-          {repoListers().length > 0 && (
-            <button className="link-btn browse-btn" onClick={() => setBrowsing(true)}>
-              Browse your repos…
-            </button>
-          )}
-          {browsing && (
-            <RepoPicker
-              account={config.account}
-              added={config.repos}
-              onAdd={onAddRepos}
-              onClose={() => setBrowsing(false)}
-            />
-          )}
-          <ul className="repo-list">
-            {config.repos.map((r) => (
-              <li key={r}>
-                <span className="repo-label" title={labelOf(r)}>
-                  {labelOf(r)}
-                </span>
-                {clones.status === "ok" && !clones.matched[r] && (
-                  <span className="badge" title="No clone of this repo found under the code folder">
-                    no clone
-                  </span>
+            <div className="modal-main">
+              <nav className="modal-nav" role="tablist" aria-orientation="vertical">
+                {TABS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === key}
+                    className={`nav-item${tab === key ? " selected" : ""}`}
+                    onClick={() => setTab(key)}
+                  >
+                    {label}
+                    {key === "accounts" && problem && <span className="nav-dot" title="A sign-in needs attention" />}
+                    {key === "repos" && <span className="count">{config.repos.length}</span>}
+                  </button>
+                ))}
+              </nav>
+              <div className="modal-body" role="tabpanel">
+                {tab === "accounts" && (
+                  <>
+                    <HealthPanel health={health} checking={checking} onRecheck={recheck} />
+                    {accounts.length > 0 && (
+                      <>
+                        <div className="section-title">GitHub account</div>
+                        <label className="field">
+                          <span>Account to use</span>
+                          <select
+                            value={config.account ?? accounts.find((a) => a.active)?.login ?? ""}
+                            onChange={(e) => onChange({ ...config, account: e.target.value })}
+                          >
+                            {accounts.map((a) => (
+                              <option key={a.login} value={a.login}>
+                                @{a.login}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </>
+                    )}
+                  </>
                 )}
-                <button
-                  className="icon-btn"
-                  title={`Remove ${labelOf(r)}`}
-                  aria-label={`Remove ${labelOf(r)}`}
-                  onClick={() => onChange({ ...config, repos: config.repos.filter((x) => x !== r) })}
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-            {config.repos.length === 0 && <li className="muted">No repos yet.</li>}
-          </ul>
-          {version && <div className="muted version">PR Radar {version}</div>}
+
+                {tab === "general" && (
+                  <>
+                    <div className="section-title">Refresh</div>
+                    <label className="field">
+                      <span>Refresh every</span>
+                      <select
+                        value={config.pollMinutes}
+                        onChange={(e) => onChange({ ...config, pollMinutes: Number(e.target.value) })}
+                      >
+                        {[...new Set([...POLL_CHOICES, config.pollMinutes])]
+                          .sort((a, b) => a - b)
+                          .map((m) => (
+                            <option key={m} value={m}>
+                              {m} min
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    {version && <div className="muted version">PR Radar {version}</div>}
+                  </>
+                )}
+
+                {tab === "repos" && (
+                  <>
+                    <div className="section-title">Add a repo</div>
+                    <form
+                      className="add-repo"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        submit();
+                      }}
+                    >
+                      <input
+                        value={input}
+                        onChange={(e) => (setInput(e.target.value), setError(null))}
+                        placeholder="owner/name or repo URL"
+                        aria-label="Add a repo"
+                      />
+                      <button type="submit">Add</button>
+                    </form>
+                    {error && <p className="error">{error}</p>}
+                    {repoListers().length > 0 && (
+                      <button type="button" className="link-btn browse-btn" onClick={() => setBrowsing(true)}>
+                        Browse your repos…
+                      </button>
+                    )}
+                    {browsing && (
+                      <RepoPicker
+                        account={config.account}
+                        added={config.repos}
+                        onAdd={onAddRepos}
+                        onClose={() => setBrowsing(false)}
+                      />
+                    )}
+                    <div className="section-title">
+                      Added repos <span className="count">{config.repos.length}</span>
+                    </div>
+                    <ul className="repo-list">
+                      {config.repos.map((r) => (
+                        <li key={r}>
+                          <span className="repo-label" title={labelOf(r)}>
+                            {labelOf(r)}
+                          </span>
+                          {clones.status === "ok" && !clones.matched[r] && (
+                            <span className="badge" title="No clone of this repo found under the code folder">
+                              no clone
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            title={`Remove ${labelOf(r)}`}
+                            aria-label={`Remove ${labelOf(r)}`}
+                            onClick={() => onChange({ ...config, repos: config.repos.filter((x) => x !== r) })}
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      ))}
+                      {config.repos.length === 0 && <li className="muted">No repos yet.</li>}
+                    </ul>
+                  </>
+                )}
+
+                {tab === "editor" && (
+                  <>
+                    <div className="section-title">Open in VS Code</div>
+                    <label className="field stack">
+                      <span>Code folder: where your clones live</span>
+                      <div className="folder-row">
+                        <input
+                          ref={folderInput}
+                          value={folderDraft}
+                          placeholder="~/Documents/GitHub"
+                          onChange={(e) => setFolderDraft(e.target.value)}
+                          onBlur={() => commitFolder(folderDraft)}
+                          onKeyDown={(e) => e.key === "Enter" && commitFolder(folderDraft)}
+                        />
+                        <button type="button" onClick={browseFolder}>
+                          Browse…
+                        </button>
+                      </div>
+                    </label>
+                    {clones.status === "scanning" && <p className="muted clone-summary">Looking for clones…</p>}
+                    {clones.status === "error" && <p className="error clone-summary">{clones.message}</p>}
+                    {clones.status === "ok" && (
+                      <p className="muted clone-summary">
+                        Found {clones.total} {clones.total === 1 ? "clone" : "clones"}
+                        {config.repos.length > 0 &&
+                          `; ${Object.keys(clones.matched).length} of your ${config.repos.length} repos matched`}
+                        .
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
