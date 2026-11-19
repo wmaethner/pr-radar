@@ -46,12 +46,12 @@ export function useRepoData(config: Config | null) {
   const errors = useMemo(() => Object.values(results).filter((r) => r.error), [results]);
 
   const repoKey = config?.repos.join(",");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: repoKey stands in for config.repos so an equal list does not restart polling
   useEffect(() => {
     if (!config) return;
     refresh(config.repos, config.account);
     const id = setInterval(() => refresh(config.repos, config.account), config.pollMinutes * 60_000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repoKey, config?.pollMinutes, config?.account, refresh]);
 
   return { results, pending, loading: pending.length > 0, updated, lastRefresh, items, errors, refresh };

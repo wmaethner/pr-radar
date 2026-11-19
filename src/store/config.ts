@@ -18,15 +18,42 @@ export interface Config {
 
 const DEFAULT: Config = { repos: [], pollMinutes: 5, view: "mine", tab: "action", snoozed: {}, collapsed: [], codeRoot: null, account: null };
 
-export async function loadConfig(): Promise<Config> {
-  const raw = await invoke<string>("load_config");
-  if (!raw) return DEFAULT;
+const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === "string");
+const isStringOrNull = (v: unknown): v is string | null => v === null || typeof v === "string";
+const isSnoozed = (v: unknown): v is Snoozed =>
+  typeof v === "object" && v !== null && !Array.isArray(v) && Object.values(v).every((x) => typeof x === "string");
+
+/**
+ * Turns the saved JSON into a Config. Each field that is missing or has the wrong type falls back
+ * to its default, so a hand-edited or older file can't put the app in a state it can't render.
+ * (An old `groupBy` key is simply ignored: tabs replaced it.)
+ */
+export function parseConfig(raw: string): Config {
+  let saved: Record<string, unknown>;
   try {
-    const { groupBy: _legacy, ...saved } = JSON.parse(raw); // groupBy was replaced by tabs
-    return { ...DEFAULT, ...saved };
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return DEFAULT;
+    saved = parsed as Record<string, unknown>;
   } catch {
     return DEFAULT;
   }
+  const tabs: Tab[] = ["action", "ready", "waiting", "snoozed"];
+  return {
+    repos: isStringArray(saved.repos) ? saved.repos : DEFAULT.repos,
+    pollMinutes:
+      typeof saved.pollMinutes === "number" && saved.pollMinutes > 0 ? saved.pollMinutes : DEFAULT.pollMinutes,
+    view: saved.view === "mine" || saved.view === "backlog" ? saved.view : DEFAULT.view,
+    tab: tabs.includes(saved.tab as Tab) ? (saved.tab as Tab) : DEFAULT.tab,
+    snoozed: isSnoozed(saved.snoozed) ? saved.snoozed : DEFAULT.snoozed,
+    collapsed: isStringArray(saved.collapsed) ? saved.collapsed : DEFAULT.collapsed,
+    codeRoot: isStringOrNull(saved.codeRoot) ? saved.codeRoot : DEFAULT.codeRoot,
+    account: isStringOrNull(saved.account) ? saved.account : DEFAULT.account,
+  };
+}
+
+export async function loadConfig(): Promise<Config> {
+  const raw = await invoke<string>("load_config");
+  return raw ? parseConfig(raw) : DEFAULT;
 }
 
 export async function saveConfig(config: Config): Promise<void> {

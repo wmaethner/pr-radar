@@ -47,5 +47,5 @@ export function parseAzHealth(raw: AzHealthRaw): Health {
 
 /** A failure to even ask (not a bad login) is reported by `useHealth`, the same for every host. */
 export async function azHealth(): Promise<Health> {
-  return parseAzHealth(JSON.parse(await invoke<string>("az_health")));
+  return parseAzHealth(JSON.parse(await invoke<string>("az_health")) as AzHealthRaw);
 }

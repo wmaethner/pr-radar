@@ -32,11 +32,11 @@ export function useClones(root: string | null, repos: string[], enabled: boolean
   }, [root, enabled]);
 
   const key = repos.join(",");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: key stands in for repos, so a new array with the same repos does not rematch
   return useMemo((): ClonesState => {
     if (!root || !enabled) return { status: "idle" };
     if (!scan || scan.root !== root) return { status: "scanning" };
     if ("error" in scan) return { status: "error", message: scan.error };
     return { status: "ok", total: scan.clones.length, matched: matchClones(scan.clones, repos, matches) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [root, enabled, scan, key]);
 }

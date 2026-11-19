@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { RawIssue, RawPullRequest, RawRepoData, RawReviewRequestedEvent, RawStackEntry } from "./raw";
 import type { Issue, PullRequest, StackInfo, StackMember } from "./types";
 
 const REPO_QUERY = `
@@ -50,7 +51,7 @@ export async function gqlRaw<T>(
     body: JSON.stringify({ query, variables }),
     account,
   });
-  return JSON.parse(raw);
+  return JSON.parse(raw) as { data: T | null; errors?: { message: string }[] };
 }
 
 /** Like `gqlRaw`, but any error in the response is a failure. */
@@ -61,23 +62,17 @@ async function gql<T>(query: string, variables: Record<string, string>, account:
 }
 
 /** The stack a PR is in, or undefined when it isn't in one. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function toStack(entry: any): StackInfo | undefined {
+export function toStack(entry: RawStackEntry | null): StackInfo | undefined {
   const stack = entry?.stack;
-  if (!stack) return undefined;
-  const members: StackMember[] = (stack.entries?.nodes ?? [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((e: any) => e?.pullRequest)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((e: any) => ({ ...e.pullRequest, position: e.position }))
-    .sort((a: StackMember, b: StackMember) => a.position - b.position);
+  if (!entry || !stack) return undefined;
+  const members: StackMember[] = stack.entries.nodes
+    .flatMap((e) => (e?.pullRequest ? [{ ...e.pullRequest, position: e.position }] : []))
+    .sort((a, b) => a.position - b.position);
   return { position: entry.position, size: stack.size, members };
 }
 
 /** Latest time each user was asked to review, from ReviewRequestedEvent nodes. */
-export function toRequestedAt(
-  nodes: { createdAt?: string; requestedReviewer?: { login?: string } | null }[],
-): Record<string, string> {
+export function toRequestedAt(nodes: RawReviewRequestedEvent[]): Record<string, string> {
   const out: Record<string, string> = {};
   for (const n of nodes) {
     const login = n.requestedReviewer?.login;
@@ -86,8 +81,7 @@ export function toRequestedAt(
   return out;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toPr(repo: string, n: any): PullRequest {
+export function toPr(repo: string, n: RawPullRequest): PullRequest {
   const commit = n.commits.nodes[0]?.commit;
   return {
     repo,
@@ -101,12 +95,12 @@ function toPr(repo: string, n: any): PullRequest {
     lastCommitAt: commit?.committedDate ?? null,
     ciState: commit?.statusCheckRollup?.state ?? null,
     requestedReviewers: n.reviewRequests.nodes
-      .map((r: { requestedReviewer: { login?: string } | null }) => r.requestedReviewer?.login)
-      .filter(Boolean),
-    requestedAt: toRequestedAt(n.timelineItems?.nodes ?? []),
+      .map((r) => r.requestedReviewer?.login)
+      .filter((l): l is string => !!l),
+    requestedAt: toRequestedAt(n.timelineItems.nodes),
     reviews: n.reviews.nodes,
     threads: n.reviewThreads.nodes,
-    comments: n.comments.nodes.map((c: { author: { login: string; __typename: string } | null; createdAt: string }) => ({
+    comments: n.comments.nodes.map((c) => ({
       author: c.author && { login: c.author.login, isBot: c.author.__typename === "Bot" },
       createdAt: c.createdAt,
     })),
@@ -114,8 +108,7 @@ function toPr(repo: string, n: any): PullRequest {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toIssue(repo: string, n: any): Issue {
+export function toIssue(repo: string, n: RawIssue): Issue {
   return {
     repo,
     number: n.number,
@@ -123,10 +116,10 @@ function toIssue(repo: string, n: any): Issue {
     url: n.url,
     createdAt: n.createdAt,
     updatedAt: n.updatedAt,
-    labels: n.labels.nodes.map((l: { name: string }) => l.name),
-    assignees: n.assignees.nodes.map((a: { login: string }) => a.login),
+    labels: n.labels.nodes.map((l) => l.name),
+    assignees: n.assignees.nodes.map((a) => a.login),
     commentCount: n.comments.totalCount,
-    linkedPrs: n.closedByPullRequestsReferences.nodes.map((p: { number: number }) => p.number),
+    linkedPrs: n.closedByPullRequestsReferences.nodes.map((p) => p.number),
   };
 }
 
@@ -136,11 +129,7 @@ export async function fetchRepo(
   account: string | null,
 ): Promise<{ me: string; prs: PullRequest[]; issues: Issue[] }> {
   const [owner, name] = repo.split("/");
-  const data = await gql<{
-    viewer: { login: string };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    repository: { pullRequests: { nodes: any[] }; issues: { nodes: any[] } } | null;
-  }>(REPO_QUERY, { owner, name }, account);
+  const data = await gql<RawRepoData>(REPO_QUERY, { owner, name }, account);
   if (!data.repository) throw new Error("Repo not found or no access");
   return {
     me: data.viewer.login,

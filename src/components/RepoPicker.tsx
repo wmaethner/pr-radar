@@ -51,13 +51,13 @@ export function RepoPicker({
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only: load the first page once; load() is recreated every render
   useEffect(() => {
     alive.current = true;
     load(null);
     return () => {
       alive.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addedLower = useMemo(() => new Set(added.map((k) => k.toLowerCase())), [added]);

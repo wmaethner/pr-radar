@@ -30,8 +30,9 @@ export function ghHostEntries(raw: GhAuthRaw): HostEntry[] | null {
   // Current gh prints {"hosts":{}} with no login; older builds may print nothing but this.
   if (!raw.hosts) return /not logged in/i.test(raw.detail) ? [] : null;
   try {
-    const list = JSON.parse(raw.hosts).hosts?.["github.com"] ?? [];
-    return Array.isArray(list) ? list : null;
+    const parsed = JSON.parse(raw.hosts) as { hosts?: { "github.com"?: unknown } } | null;
+    const list = parsed?.hosts?.["github.com"] ?? [];
+    return Array.isArray(list) ? (list as HostEntry[]) : null;
   } catch {
     return null;
   }
