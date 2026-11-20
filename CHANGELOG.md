@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.0](https://github.com/wmaethner/pr-radar/compare/v0.6.0...v0.7.0) (2026-11-19)
+
+
+### Features
+
+* check for updates every 2 hours while the app is open ([#50](https://github.com/wmaethner/pr-radar/issues/50)) ([2675198](https://github.com/wmaethner/pr-radar/commit/2675198eda5ac1ba6afde85b073e9ed87c97e781))
+* move settings into a tabbed modal and show the version in a footer ([#54](https://github.com/wmaethner/pr-radar/issues/54)) ([1078e37](https://github.com/wmaethner/pr-radar/commit/1078e37ff2bd66c404d392115ce31f7d1262bce1))
+* show how long each PR has been in its current state ([#52](https://github.com/wmaethner/pr-radar/issues/52)) ([07f5d22](https://github.com/wmaethner/pr-radar/commit/07f5d22af2dbfc9d689c9eed212c44d131a77c26))
+
 ## [0.6.0](https://github.com/wmaethner/pr-radar/compare/v0.5.0...v0.6.0) (2026-11-17)
 
 
