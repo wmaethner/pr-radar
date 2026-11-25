@@ -15,13 +15,17 @@ export async function findLocalRepo(root: string, key: string): Promise<string |
   return findClone(await scanRepos(root), key, (k, r) => provider.matchesRemote(k, r));
 }
 
-/** The `vscode://file/` link for a folder. `encodeURI` leaves `#` and `?`, which would cut the path short. */
+/**
+ * The `vscode://file/` link for a folder. `encodeURI` leaves `#` and `?`, which would cut the path short.
+ * `windowId=_blank` asks for a new window when the folder isn't open yet; without it VS Code reuses the
+ * last active window and replaces the folder it had.
+ */
 export function vscodeUrl(path: string): string {
   const normalized = path.replace(/\\/g, "/").replace(/^\//, "");
-  return `vscode://file/${encodeURI(normalized).replace(/#/g, "%23").replace(/\?/g, "%3F")}`;
+  return `vscode://file/${encodeURI(normalized).replace(/#/g, "%23").replace(/\?/g, "%3F")}?windowId=_blank`;
 }
 
-/** Opens the folder in VS Code, which focuses the window if that folder is already open there. */
+/** Opens the folder in VS Code in a new window, or focuses the window that already has it open. */
 export async function openInVscode(path: string): Promise<void> {
   await openUrl(vscodeUrl(path));
 }
