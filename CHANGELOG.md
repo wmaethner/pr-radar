@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/wmaethner/pr-radar/compare/v0.7.0...v0.7.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* open repos in a new VS Code window ([#55](https://github.com/wmaethner/pr-radar/issues/55)) ([a662f08](https://github.com/wmaethner/pr-radar/commit/a662f08e196ee2a95384cde45ce19eb4bdf1aaae))
+
 ## [0.7.0](https://github.com/wmaethner/pr-radar/compare/v0.6.0...v0.7.0) (2026-11-19)
 
 
