@@ -9,14 +9,14 @@ const { findLocalRepo, openRepoInVscode, vscodeUrl } = await import("./editor");
 
 describe("vscodeUrl", () => {
   it("builds a file link from a macOS path", () => {
-    expect(vscodeUrl("/Users/me/code/site")).toBe("vscode://file/Users/me/code/site");
+    expect(vscodeUrl("/Users/me/code/site")).toBe("vscode://file/Users/me/code/site?windowId=_blank");
   });
   it("builds a file link from a Windows path", () => {
-    expect(vscodeUrl("C:\\Users\\me\\code\\site")).toBe("vscode://file/C:/Users/me/code/site");
+    expect(vscodeUrl("C:\\Users\\me\\code\\site")).toBe("vscode://file/C:/Users/me/code/site?windowId=_blank");
   });
   it("escapes spaces and the characters that would end the path early", () => {
-    expect(vscodeUrl("/Users/me/my code")).toBe("vscode://file/Users/me/my%20code");
-    expect(vscodeUrl("/Users/me/c#/what?")).toBe("vscode://file/Users/me/c%23/what%3F");
+    expect(vscodeUrl("/Users/me/my code")).toBe("vscode://file/Users/me/my%20code?windowId=_blank");
+    expect(vscodeUrl("/Users/me/c#/what?")).toBe("vscode://file/Users/me/c%23/what%3F?windowId=_blank");
   });
 });
 
@@ -53,7 +53,7 @@ describe("openRepoInVscode", () => {
   it("opens the matching clone and reports no error", async () => {
     invoke.mockResolvedValue([{ path: "/code/site", remotes: ["https://github.com/acme/site"] }]);
     expect(await openRepoInVscode("/code", "acme/site")).toBeNull();
-    expect(openUrl).toHaveBeenCalledWith("vscode://file/code/site");
+    expect(openUrl).toHaveBeenCalledWith("vscode://file/code/site?windowId=_blank");
   });
   it("says so when there is no clone", async () => {
     invoke.mockResolvedValue([]);
